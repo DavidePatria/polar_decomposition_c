@@ -284,7 +284,8 @@ static inline void polar_decomposition(float A[3][3], float Q[3][3], float H[3][
 
   U[1] = AA[r][c];
 
-  if(U[1] == 0) U(2) = 0;
+  // fixed from U(2). needs check
+  if(U[1] == 0) U[2] = 0;
   else U[2] = AA[2-r][2-c] - AA[r][2-c] * AA[2-r][c] / U[1];
 
   d = dd;
