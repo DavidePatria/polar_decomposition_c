@@ -45,6 +45,8 @@
 #include <stdio.h>
 #include <complex.h>
 #include "svd.h"
+// is it necessary?
+#include <stdbool.h>
 
 // Note : if you review this code using the original Matlab implementation,
 // remember Matlab indexes arrays from 1, while C starts at 0, so every index needs to be shifted by -1.
@@ -206,7 +208,7 @@ static inline void polar_decomposition(float A[3][3], float Q[3][3], float H[3][
   b = -4.f * b + 1.f;
 
   float d;
-  int subspa = FALSE;
+  bool subspa = false;
 
   // copy of A
   float AA[3][3] = { { A[0][0], A[0][1], A[0][2] },
@@ -303,7 +305,8 @@ static inline void polar_decomposition(float A[3][3], float Q[3][3], float H[3][
   }
   else
   {
-    subspa = TRUE;
+	// corrected as above to get values from stdbool.h
+    subspa = true;
   }
 
   if(d == 0) d = 1.f;
@@ -414,61 +417,61 @@ static inline void polar_decomposition(float A[3][3], float Q[3][3], float H[3][
   
 
 // =============================================================================
-
-  	// is this the right size for v?
-  	double v[4];	
-
-    DD = D[2][2]*D[3][3]-D[2][3]*D[2][3];
-
-	// slamming the cock for now about the case where DD==0
-    //if (DD == 0) {
-	//    // variables needed for the computations below
-	//    double D_m[2][2];
-	//    double abs_matrix_22[2][2];
-	//    double max;
-	//	// south-est minor of D
-	//	D_m[0][0] = D[1][1];
-	//	D_m[0][1] = D[1][2];
-	//	D_m[1][1] = D[2][2];
-	//	D_m[1][0] = D[2][1];
-	//	// absolute value of each element written on matrix_abs
-	//	abs_matrix_22( D_m, matrix_abs);	
-	//	// max among all the elements
-	//	max = max_val_matrix_22(abs_matrix);
-
-	//	if(max == 0) {
-	//		v[0] = L[1][0]*L[3][1]-L[3][0];
-	//		v[1] = -L[3][1];
-	//		v[2] = 0;
-	//		v[3] = 1;
-
-	//		int ii;
-	//		double norm = 0;
-
-	//		// computing the square of the norm of v
-	//		for(ii=0; ii<4; ii++){
-	//			norm += v[ii]*v[ii]; 
-	//		}
-	//		// squared root of the norm of v
-	//		norm = sqrt(norm);
-
-	//		//dividing each element of v for the norm
-	//		for(ii=0; ii<4; ii++){
-	//			v[ii]/norm;
-	//		}
-	//	} else {
-	//		// NOT COMPLETED AS 'null' IS A PAIN IN THE ASS
-	//		v = L'\[0;0;null(D(2:3,2:3))];
-	//		v = v/norm(v);
-	//	  }
-	//} else {
-	//	//ID = [D(4,4) -D(3,4); -D(3,4) D(3,3)];
-	//	// can the matrix be directly assignes like this?
-	//	double ID[2][2] = {{D[3][3], D[2][3]}, {D[2][3], D[2][2]}};
-
-	double ID[2][2] = {{D[3][3], D[2][3]}, {D[2][3], D[2][2]}};
-
-		
+  
+  // is this the right size for v?
+  double v[4];	
+  
+  DD = D[2][2]*D[3][3]-D[2][3]*D[2][3];
+  
+  // slamming the cock for now about the case where DD==0
+  //if (DD == 0) {
+  //    // variables needed for the computations below
+  //    double D_m[2][2];
+  //    double abs_matrix_22[2][2];
+  //    double max;
+  //	// south-est minor of D
+  //	D_m[0][0] = D[1][1];
+  //	D_m[0][1] = D[1][2];
+  //	D_m[1][1] = D[2][2];
+  //	D_m[1][0] = D[2][1];
+  //	// absolute value of each element written on matrix_abs
+  //	abs_matrix_22( D_m, matrix_abs);	
+  //	// max among all the elements
+  //	max = max_val_matrix_22(abs_matrix);
+  
+  //	if(max == 0) {
+  //		v[0] = L[1][0]*L[3][1]-L[3][0];
+  //		v[1] = -L[3][1];
+  //		v[2] = 0;
+  //		v[3] = 1;
+  
+  //		int ii;
+  //		double norm = 0;
+  
+  //		// computing the square of the norm of v
+  //		for(ii=0; ii<4; ii++){
+  //			norm += v[ii]*v[ii]; 
+  //		}
+  //		// squared root of the norm of v
+  //		norm = sqrt(norm);
+  
+  //		//dividing each element of v for the norm
+  //		for(ii=0; ii<4; ii++){
+  //			v[ii]/norm;
+  //		}
+  //	} else {
+  //		// NOT COMPLETED AS 'null' IS A PAIN IN THE ASS
+  //		v = L'\[0;0;null(D(2:3,2:3))];
+  //		v = v/norm(v);
+  //	  }
+  //} else {
+  //	//ID = [D(4,4) -D(3,4); -D(3,4) D(3,3)];
+  //	// can the matrix be directly assignes like this?
+  //	double ID[2][2] = {{D[3][3], D[2][3]}, {D[2][3], D[2][2]}};
+  
+  double ID[2][2] = {{D[3][3], D[2][3]}, {D[2][3], D[2][2]}};
+  
+  	
 
 
 // =============================================================================
@@ -484,196 +487,196 @@ static inline void polar_decomposition(float A[3][3], float Q[3][3], float H[3][
 
 
 // =============================================================================
+  
+  if (subspa == 1) {
+      //v = [L(2,1)*L(3,2)-L(3,1) L(2,1)*L(4,2)-L(4,1);-L(3,2) -L(4,2);1 0;0 1];
+    
+    v[0][0] = L[1][0]*L[2][1]-L[2][0];
+    v[0][1] = L[1][0]*L[3][1]-L[3][0];
+    v[1][0] = -L[2][1];
+    v[1][1] = -L[3][1];
+    v[2][0] = 1;
+    v[2][1] = 0;
+    v[3][0] = 0
+    v[3][1] = 1;
 
-    if (subspa == 1) {
-        //v = [L(2,1)*L(3,2)-L(3,1) L(2,1)*L(4,2)-L(4,1);-L(3,2) -L(4,2);1 0;0 1];
-		
-		v[0][0] = L[1][0]*L[2][1]-L[2][0];
-		v[0][1] = L[1][0]*L[3][1]-L[3][0];
-		v[1][0] = -L[2][1];
-		v[1][1] = -L[3][1];
-		v[2][0] = 1;
-		v[2][1] = 0;
-		v[3][0] = 0
-		v[3][1] = 1;
-		
-		// first use of L here, it needs to be defined, after the dimensions are clear
-        //IL = [1 0 0 0;-L(2,1) 1 0 0;v'];
+    // first use of L here, it needs to be defined, after the dimensions are clear
+      //IL = [1 0 0 0;-L(2,1) 1 0 0;v'];
 
-		IL[0][0] = 1;
-		IL[0][1] = 0;
-		IL[0][2] = 0;
-		IL[0][3] = 0;
+    IL[0][0] = 1;
+    IL[0][1] = 0;
+    IL[0][2] = 0;
+    IL[0][3] = 0;
 
-		IL[1][0] = -L[1,0];
-		IL[1][1] = 0;
-		IL[1][2] = 0;
-		IL[1][3] = 0;
+    IL[1][0] = -L[1,0];
+    IL[1][1] = 0;
+    IL[1][2] = 0;
+    IL[1][3] = 0;
 
-		// assigning v as transposed already
-		IL[2][0] = v[0][0];
-		IL[2][1] = v[0][1];
-		IL[2][2] = v[0][2];
-		IL[2][3] = v[0][3];
+    // assigning v as transposed already
+    IL[2][0] = v[0][0];
+    IL[2][1] = v[0][1];
+    IL[2][2] = v[0][2];
+    IL[2][3] = v[0][3];
 
-		IL[3][0] = v[1][0];
-		IL[3][1] = v[1][1];
-		IL[3][2] = v[1][2];
-		IL[3][3] = v[1][3];
-
-
-// =============================================================================
-
-		// The tilde is used to get part of the output of qr and discrd the remaining
-        //[v ~] = qr(v,0); //->cost in flops if implemented by hand: 37 M+24 A+4 O
-		// Since v and Q (resulting from qr decomp) have the same order, the v = Q.
-		// The behaviour of the implemented function for QR works for the present case
-		// since if A(mxn) has m>n the output is the same.
-		int row = 4;
-		int col = 2;
-
-		double Q[row][col];
-
-		QR_decomp(v,Q,R,row,col);
-
-		// assigning Q values to v. For the present case size(Q) = size(v)
-		
-		int ii;
-		for (ii=0; ii<row ;ii++) {
-			for (jj=0; jj<col ;jj++) {
-				v[ii][jj] = Q[ii][jj];
-			}
-		}
-
-		// IL is 4x4
-
-		double v_m[4][2];
-		
-		matrix_multiplication(IL, v, v_m, 4,4,2);
-
-        //v = IL*v;  // it looks faster to multiply than to solve lin syst (even though should be same flops)
-
-        //v(1,:) = v(1,:)/D(1,1);
-		for(ii=0; ii<2; ii++) {
-			v_m[0][ii] /= D[0][0];
-		}
-
-        //v(2,:) = v(2,:)/D(2,2);
-		for(ii=0; ii<2; ii++) {
-			v_m[1][ii] /= D[1][1];
-		}
-
-		// a part of v (which is v_m in the current case) needs to be extracted and later concatenated
-		
-        //v(3:4,:) = ID*v(3:4,:)/DD(1);
-		
-		//matrix_multiplication(ID, v_m, v_mm, 0,0,0);
-		// result matrix for the next multiplication, which is a submatrix of v[4,2], so [2,2]
-		double v_res[2][2];
-		// submatrix extracted from v
-		double v_mm[2][2];
-
-		v_mm[0][0] = v[2][0];
-		v_mm[0][1] = v[2][1];
-		v_mm[1][0] = v[3][0];
-		v_mm[1][1] = v[3][1];
-
-		// ID has been previously defined as [2][2]
-		matrix_multiplication(ID, v_m, v_res, 2,2,2);
-
-		// changing the values of the original matrix and diving v_res at the same time
-		v[2][0] = v_res[0][0]/DD[0];
-		v[2][1] = v_res[0][1]/DD[0];
-		v[3][0] = v_res[1][0]/DD[0];
-		v[3][1] = v_res[1][1]/DD[0];
+    IL[3][0] = v[1][0];
+    IL[3][1] = v[1][1];
+    IL[3][2] = v[1][2];
+    IL[3][3] = v[1][3];
 
 
-		// v_mm and v_res could now be freed, if they where dinamically allocated, but since I am stupido ai chènnòt du só, plis fri de mètrisis fór mi.
+  ============================================================================
+
+    // The tilde is used to get part of the output of qr and discrd the remaining
+      //[v ~] = qr(v,0); //->cost in flops if implemented by hand: 37 M+24 A+4 O
+    // Since v and Q (resulting from qr decomp) have the same order, the v = Q.
+    // The behaviour of the implemented function for QR works for the present case
+    // since if A(mxn) has m>n the output is the same.
+    int row = 4;
+    int col = 2;
+
+    double Q[row][col];
+
+    QR_decomp(v,Q,R,row,col);
+
+    // assigning Q values to v. For the present case size(Q) = size(v)
+
+    int ii;
+    for (ii=0; ii<row ;ii++) {
+    	for (jj=0; jj<col ;jj++) {
+    		v[ii][jj] = Q[ii][jj];
+    	}
+    }
+
+    // IL is 4x4
+
+    double v_m[4][2];
+
+    matrix_multiplication(IL, v, v_m, 4,4,2);
+
+      //v = IL*v;  // it looks faster to multiply than to solve lin syst (even though should be same flops)
+
+      //v(1,:) = v(1,:)/D(1,1);
+    for(ii=0; ii<2; ii++) {
+    	v_m[0][ii] /= D[0][0];
+    }
+
+      //v(2,:) = v(2,:)/D(2,2);
+    for(ii=0; ii<2; ii++) {
+    	v_m[1][ii] /= D[1][1];
+    }
+
+    // a part of v (which is v_m in the current case) needs to be extracted and later concatenated
+
+      //v(3:4,:) = ID*v(3:4,:)/DD(1);
+
+    //matrix_multiplication(ID, v_m, v_mm, 0,0,0);
+    // result matrix for the next multiplication, which is a submatrix of v[4,2], so [2,2]
+    double v_res[2][2];
+    // submatrix extracted from v
+    double v_mm[2][2];
+
+    v_mm[0][0] = v[2][0];
+    v_mm[0][1] = v[2][1];
+    v_mm[1][0] = v[3][0];
+    v_mm[1][1] = v[3][1];
+
+    // ID has been previously defined as [2][2]
+    matrix_multiplication(ID, v_m, v_res, 2,2,2);
+
+    // changing the values of the original matrix and diving v_res at the same time
+    v[2][0] = v_res[0][0]/DD[0];
+    v[2][1] = v_res[0][1]/DD[0];
+    v[3][0] = v_res[1][0]/DD[0];
+    v[3][1] = v_res[1][1]/DD[0];
 
 
-		// transposed matrix
-		double v_t[2,4];
-
-		v_t[0][0] = v[0][0];
-		v_t[0][1] = v[1][0];
-		v_t[0][2] = v[2][0];
-		v_t[0][3] = v[3][0];
-
-		v_t[1][0] = v[0][1];
-		v_t[1][1] = v[1][1];
-		v_t[1][2] = v[2][1];
-		v_t[1][3] = v[3][1];
+    // v_mm and v_res could now be freed, if they where dinamically allocated, but since I am stupido ai chènnòt du só, plis fri de mètrisis fór mi.
 
 
-        // v = v'*IL;
-		// put the result in v
-		matrix_multiply( v_t, IL, v, 2,4,4);
+    // transposed matrix
+    double v_t[2,4];
 
-		// traspose may be freed now and another one is required
-		// tranpose v again
-		// v = v';
+    v_t[0][0] = v[0][0];
+    v_t[0][1] = v[1][0];
+    v_t[0][2] = v[2][0];
+    v_t[0][3] = v[3][0];
 
-		// aritransposed matrix
-		double v_tt[2,4];
-
-		v_tt[0][0] = v[0][0];
-		v_tt[1][0] = v[0][1];
-		v_tt[2][0] = v[0][2];
-		v_tt[3][0] = v[0][3];
-
-		v_tt[0][1] = v[1][0];
-		v_tt[1][1] = v[1][1];
-		v_tt[2][1] = v[1][2];
-		v_tt[3][1] = v[1][3];
-
-		// next multiplication, the v on the right hand is transposed
-        // v = IL*v;
-		// equivalent to this
-		// v = IL*v'
-		matrix_multiply( IL, v_tt, v, 2,4,4);
-
-		// dumb to not use anpther for cycle but I'm already loosing my sight
-        // v(1,:) = v(1,:)/D(1,1);
-        // v(2,:) = v(2,:)/D(2,2);
-		for(j=0; j<2; j++) {
-			v[0,j] /= D[0,0];
-			v[1,j] /= D[1,1];
-		};
+    v_t[1][0] = v[0][1];
+    v_t[1][1] = v[1][1];
+    v_t[1][2] = v[2][1];
+    v_t[1][3] = v[3][1];
 
 
-        v(3:4,:) = ID*v(3:4,:)/DD(1);
-		
-        v = v'*IL;v = v';
-                [v ~] = qr(v,0);
-        H = v'*L;H = -H*D*H'; %Cheaper
+      // v = v'*IL;
+    // put the result in v
+    matrix_multiply( v_t, IL, v, 2,4,4);
+  
+    // traspose may be freed now and another one is required
+    // tranpose v again
+    // v = v';
 
-        if (fabsf(H(1,2))<1e-15) {
-            if ( [H(1][1] > H[1][2] ) {
-                v = v(:,1);
-			} else {
-                v = v(:,2);
-				];
-		} else {
-            r = (H[1][1]-H[2][2]) / (2*H([1][2]);
-            v = v*[r+sign(H(1,2))*sqrt(1+r(1)*r(1));1];
-            v = v/norm(v);
-		};
+    // aritransposed matrix
+    double v_tt[2,4];
 
-    //else
-    //    v = [L(2,1)*L(4,2)+L(3,1)*L(4,3)-L(2,1)*L(4,3)*L(3,2)-L(4,1);
-    //         L(4,3)*L(3,2)-L(4,2); -L(4,3) ;1];
-    //    IL = [1 0 0 0; -L(2,1) 1 0 0; L(2,1)*L(3,2)-L(3,1) -L(3,2) 1 0; v'];
-    //    nv = realsqrt(v(1)*v(1)+v(2)*v(2)+v(3)*v(3)+v(4)*v(4));
-    //    v = v/nv(1);
+    v_tt[0][0] = v[0][0];
+    v_tt[1][0] = v[0][1];
+    v_tt[2][0] = v[0][2];
+    v_tt[3][0] = v[0][3];
 
-    //    for (it = 1:nit) {
-    //        v = IL*v;
-    //        v(1) = v(1)/D(1,1);v(2) = v(2)/D(2,2);v(3:4) = ID*v(3:4)/DD(1);
-    //        v = v'*IL;v = v';
-    //        nv = realsqrt(v(1)*v(1)+v(2)*v(2)+v(3)*v(3)+v(4)*v(4));
-    //        v = v/nv(1);
-	//	};
-	//};
-    end
-    v(p) = v;
+    v_tt[0][1] = v[1][0];
+    v_tt[1][1] = v[1][1];
+    v_tt[2][1] = v[1][2];
+    v_tt[3][1] = v[1][3];
+
+    // next multiplication, the v on the right hand is transposed
+      // v = IL*v;
+    // equivalent to this
+    // v = IL*v'
+    matrix_multiply( IL, v_tt, v, 2,4,4);
+
+    // dumb to not use anpther for cycle but I'm already loosing my sight
+      // v(1,:) = v(1,:)/D(1,1);
+      // v(2,:) = v(2,:)/D(2,2);
+    for(j=0; j<2; j++) {
+      v[0,j] /= D[0,0];
+      v[1,j] /= D[1,1];
+    };
+
+
+      v(3:4,:) = ID*v(3:4,:)/DD(1);
+
+      v = v'*IL;v = v';
+              [v ~] = qr(v,0);
+      H = v'*L;H = -H*D*H'; %Cheaper
+
+      if (fabsf(H(1,2))<1e-15) {
+          if ( [H(1][1] > H[1][2] ) {
+              v = v(:,1);
+    	} else {
+            v = v(:,2);
+    	  ];
+    } else {
+          r = (H[1][1]-H[2][2]) / (2*H([1][2]);
+          v = v*[r+sign(H(1,2))*sqrt(1+r(1)*r(1));1];
+          v = v/norm(v);
+    };
+  
+  //else
+  //    v = [L(2,1)*L(4,2)+L(3,1)*L(4,3)-L(2,1)*L(4,3)*L(3,2)-L(4,1);
+  //         L(4,3)*L(3,2)-L(4,2); -L(4,3) ;1];
+  //    IL = [1 0 0 0; -L(2,1) 1 0 0; L(2,1)*L(3,2)-L(3,1) -L(3,2) 1 0; v'];
+  //    nv = realsqrt(v(1)*v(1)+v(2)*v(2)+v(3)*v(3)+v(4)*v(4));
+  //    v = v/nv(1);
+  
+  //    for (it = 1:nit) {
+  //        v = IL*v;
+  //        v(1) = v(1)/D(1,1);v(2) = v(2)/D(2,2);v(3:4) = ID*v(3:4)/DD(1);
+  //        v = v'*IL;v = v';
+  //        nv = realsqrt(v(1)*v(1)+v(2)*v(2)+v(3)*v(3)+v(4)*v(4));
+  //        v = v/nv(1);
+  //	};
+  //};
+  end
+  v(p) = v;
  }
