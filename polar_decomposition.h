@@ -45,29 +45,28 @@
 #include <stdio.h>
 #include <complex.h>
 #include "svd.h"
-#include "polar_decomposition.h"
 
 // Note : if you review this code using the original Matlab implementation,
 // remember Matlab indexes arrays from 1, while C starts at 0, so every index needs to be shifted by -1.
 
-void normalize_array(float *vector) {
+static inline void normalize_array(float *vector) {
 	int ii;
 	float norm = 0;
 	// computing the square of the norm of v
 	for(ii=0; ii<4; ii++){
-		norm += v[ii]*v[ii]; 
+		norm += vector[ii]*vector[ii]; 
 	}
-	// squared root of the norm of v
+	// squared root of the norm of vector
 	norm = sqrt(norm);
 
 	//dividing each element of v for the norm
 	for(ii=0; ii<4; ii++){
-		v[ii]/norm;
+		vector[ii]/norm;
 	}
 }
 
 //absolute value element wise for a 2x2 matrix
-void abs_matrix_22(float matrix_vals[][2], float matrix_abs[][2]) {
+static inline void abs_matrix_22(float matrix_vals[][2], float matrix_abs[][2]) {
   int i, j;
     
   for(i = 0; i < 2; i++){
