@@ -609,52 +609,68 @@ static inline void polar_decomposition(float A[3][3], float Q[3][3], float H[3][
     v_t[1][3] = v[3][1];
 
 
-      // v = v'*IL;
+    // v = v'*IL;
     // put the result in v
-    matrix_multiply( v_t, IL, v, 2,4,4);
+    // need for a temporary matrix since v changes size
+    // this also may be freed
+    double v_res1[2][4];
+    matrix_multiply( v_t, IL, v_res1, 2,4,4);
+	// after this v is 2x4
   
     // traspose may be freed now and another one is required
-    // tranpose v again
-    // v = v';
 
     // aritransposed matrix
+    // v = v';
     double v_tt[2,4];
 
-    v_tt[0][0] = v[0][0];
-    v_tt[1][0] = v[0][1];
-    v_tt[2][0] = v[0][2];
-    v_tt[3][0] = v[0][3];
+    v_tt[0][0] = v_res1[0][0];
+    v_tt[1][0] = v_res1[0][1];
+    v_tt[2][0] = v_res1[0][2];
+    v_tt[3][0] = v_res1[0][3];
 
-    v_tt[0][1] = v[1][0];
-    v_tt[1][1] = v[1][1];
-    v_tt[2][1] = v[1][2];
-    v_tt[3][1] = v[1][3];
+    v_tt[0][1] = v_res1[1][0];
+    v_tt[1][1] = v_res1[1][1];
+    v_tt[2][1] = v_res1[1][2];
+    v_tt[3][1] = v_res1[1][3];
 
     // next multiplication, the v on the right hand is transposed
+	// from the previous operation
       // v = IL*v;
     // equivalent to this
     // v = IL*v'
-    matrix_multiply( IL, v_tt, v, 2,4,4);
+    double v_res2[4][2];
+    matrix_multiply( IL, v_tt, v_res2, 4,4,2);
+	//v the result is now 4x2
 
     // dumb to not use anpther for cycle but I'm already loosing my sight
       // v(1,:) = v(1,:)/D(1,1);
       // v(2,:) = v(2,:)/D(2,2);
     for(j=0; j<2; j++) {
-      v[0,j] /= D[0,0];
-      v[1,j] /= D[1,1];
+      v_res2[0,j] /= D[0,0];
+      v_res2[1,j] /= D[1,1];
+    };
+
+	// ID is 2x2
+    // double sub_v[2][2];
+
+    // v(3:4,:) = ID*v(3:4,:)/DD(1);
+    for(j=0; j<2; j++) {
+      v[2,j] = ID[2,j]*D[0,0];
+      v[3,j] = ID[3,j]*D[1,1];
     };
 
 
-      v(3:4,:) = ID*v(3:4,:)/DD(1);
 
-      v = v'*IL;v = v';
-              [v ~] = qr(v,0);
-      H = v'*L;H = -H*D*H'; %Cheaper
 
-      if (fabsf(H(1,2))<1e-15) {
-          if ( [H(1][1] > H[1][2] ) {
-              v = v(:,1);
-    	} else {
+
+    v = v'*IL;v = v';
+            [v ~] = qr(v,0);
+    H = v'*L;H = -H*D*H'; %Cheaper
+
+    if (fabsf(H(1,2))<1e-15) {
+        if ( [H(1][1] > H[1][2] ) {
+            v = v(:,1);
+    	else {
             v = v(:,2);
     	  ];
     } else {
