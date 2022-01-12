@@ -123,7 +123,25 @@ static inline double max_val_matrix_22(float matrice[][2]) {
 	return max;
 }
 
-void normalize_array(float *vector, int size) {
+
+// redefined below? che cazzo succede?
+//static inline void polar_decomposition(float A[3][3], float Q[3][3], float H[3][3])
+// {
+//  // Frobenius / L2 norm of the matrice - aka we sum the squares of each matrice element and take the sqrt
+//	float max;
+//	int i,j;
+//    const float norm = sqrtf(A[0][0] * A[0][0] + A[0][1] * A[0][1]  + A[0][2] * A[0][2] );
+//	for(i = 0; i < 2; i++) {
+//		for(j = 0; j < 2; j++){
+//			if (matrice[i][j] > max) {
+//				max = matrice[i][j];
+//			}
+//		}
+//	}
+//	return max;
+//}
+
+static inline void normalize_array(float *vector, int size) {
 	int ii;
 	float norm = 0;
 
@@ -401,51 +419,54 @@ static inline void polar_decomposition(float A[3][3], float Q[3][3], float H[3][
   	double v[4];	
 
     DD = D[2][2]*D[3][3]-D[2][3]*D[2][3];
-    if (DD == 0) {
-	    // variables needed for the computations below
-	    double D_m[2][2];
-	    double abs_matrix_22[2][2];
-	    double max;
-		// south-est minor of D
-		D_m[0][0] = D[1][1];
-		D_m[0][1] = D[1][2];
-		D_m[1][1] = D[2][2];
-		D_m[1][0] = D[2][1];
-		// absolute value of each element written on matrix_abs
-		abs_matrix_22( D_m, matrix_abs);	
-		// max among all the elements
-		max = max_val_matrix_22(abs_matrix);
 
-		if(max == 0) {
-			v[0] = L[1][0]*L[3][1]-L[3][0];
-			v[1] = -L[3][1];
-			v[2] = 0;
-			v[3] = 1;
+	// slamming the cock for now about the case where DD==0
+    //if (DD == 0) {
+	//    // variables needed for the computations below
+	//    double D_m[2][2];
+	//    double abs_matrix_22[2][2];
+	//    double max;
+	//	// south-est minor of D
+	//	D_m[0][0] = D[1][1];
+	//	D_m[0][1] = D[1][2];
+	//	D_m[1][1] = D[2][2];
+	//	D_m[1][0] = D[2][1];
+	//	// absolute value of each element written on matrix_abs
+	//	abs_matrix_22( D_m, matrix_abs);	
+	//	// max among all the elements
+	//	max = max_val_matrix_22(abs_matrix);
 
-			int ii;
-			double norm = 0;
+	//	if(max == 0) {
+	//		v[0] = L[1][0]*L[3][1]-L[3][0];
+	//		v[1] = -L[3][1];
+	//		v[2] = 0;
+	//		v[3] = 1;
 
-			// computing the square of the norm of v
-			for(ii=0; ii<4; ii++){
-				norm += v[ii]*v[ii]; 
-			}
-			// squared root of the norm of v
-			norm = sqrt(norm);
+	//		int ii;
+	//		double norm = 0;
 
-			//dividing each element of v for the norm
-			for(ii=0; ii<4; ii++){
-				v[ii]/norm;
-			}
-		} else {
-			// NOT COMPLETED AS 'null' IS A PAIN IN THE ASS
-			v = L'\[0;0;null(D(2:3,2:3))];
-			v = v/norm(v);
-		  }
-	} else {
-		//ID = [D(4,4) -D(3,4); -D(3,4) D(3,3)];
-		// can the matrix be directly assignes like this?
-		double ID[2][2] = {{D[3][3], D[2][3]}, {D[2][3], D[2][2]}};
+	//		// computing the square of the norm of v
+	//		for(ii=0; ii<4; ii++){
+	//			norm += v[ii]*v[ii]; 
+	//		}
+	//		// squared root of the norm of v
+	//		norm = sqrt(norm);
 
+	//		//dividing each element of v for the norm
+	//		for(ii=0; ii<4; ii++){
+	//			v[ii]/norm;
+	//		}
+	//	} else {
+	//		// NOT COMPLETED AS 'null' IS A PAIN IN THE ASS
+	//		v = L'\[0;0;null(D(2:3,2:3))];
+	//		v = v/norm(v);
+	//	  }
+	//} else {
+	//	//ID = [D(4,4) -D(3,4); -D(3,4) D(3,3)];
+	//	// can the matrix be directly assignes like this?
+	//	double ID[2][2] = {{D[3][3], D[2][3]}, {D[2][3], D[2][2]}};
+
+	double ID[2][2] = {{D[3][3], D[2][3]}, {D[2][3], D[2][2]}};
 
 		
 
