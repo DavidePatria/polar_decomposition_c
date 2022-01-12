@@ -81,28 +81,39 @@ void abs_matrix_22(float matrix_vals[][2], float matrix_abs[][2]) {
   printf("\n");
 }
 
+// multiply two matrices of any order, assuming that the multiplication is possible
+void matrix_multiply( double *A, double *B, double *RES, int rows_A, int cols_A, int cols_B) {
+	int ii, jj, kk;
+	int rows_B;
+	double product;
 
-// get the value of the greater element of a 2x2 matrix
-// if anyone knows how to make the function work with a 'float **matrice' I'm interested
-float max_val_matrix_22(float matrice[][2]) {
-	int i,j;
-	float max;
-	max = matrice[0][0];
-	for(i = 0; i < 2; i++) {
-		for(j = 0; j < 2; j++){
-			if (matrice[i][j] > max) {
-				max = matrice[i][j];
+	if(rows_B != cols_A) {
+		printf("operation not allowed for wrong dimensions\n");
+	}
+	
+	// for simplicity of definition. if this below isn't the case the product isn't possible
+	rows_B = cols_A;
+
+	product = 0;
+
+	for(kk=0; kk< rows_A; kk++) {
+		for(jj=0; jj< cols_A; jj++) {
+			for(ii=0; ii< cols_A; ii++) {
+				product += A[cols_A*kk+ii]*B[cols_B*ii+jj];
 			}
+			RES[kk*cols_A+jj] = product;
+			product = 0;
 		}
 	}
-	return max;
 }
 
 
-static inline void polar_decomposition(float A[3][3], float Q[3][3], float H[3][3])
- {
-  // Frobenius / L2 norm of the matrice - aka we sum the squares of each matrice element and take the sqrt
-  const float norm = sqrtf(A[0][0] * A[0][0] + A[0][1] * A[0][1]  + A[0][2] * A[0][2] +
+// get the value of the greater element of a 2x2 matrix
+// if anyone knows how to make the function work with a 'float **matrice' I'm interested
+static inline double max_val_matrix_22(float matrice[][2]) {
+	int i,j;
+	float max;
+	max = matrice[0][0];
 	for(i = 0; i < 2; i++) {
 		for(j = 0; j < 2; j++){
 			if (matrice[i][j] > max) {
