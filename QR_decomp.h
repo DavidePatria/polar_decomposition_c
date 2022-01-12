@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <math.h>
 
-void QR_dec( double *A, double *Q, double *R, int rows, int cols) {
+inline void QR_dec( double *A, double *Q, double *R, int rows, int cols) {
 	// The function decomposes the input matrix A into the matrices Q and R: one simmetric, one orthonormal and one upper triangular, by using the Gram-Schmidt method.
 	// The input matrice A is defined as A[rows][cols], so are the output matrices Q and R.
 	// This function is meant to be used in the polar decomposition algorithm and has been tested with different sizes of input matrices. 
@@ -13,6 +13,9 @@ void QR_dec( double *A, double *Q, double *R, int rows, int cols) {
 	// As already mentioned in the README the matrices orders are: A mxn => Q mxn , R nxn and rank(A) must be n
 	// The matrix A[m x n] = [A_00, A_01, ... A_0n;  ...... ; A_m0, ... , A_mn] can be accessed as a vector that has 
 	// all its rows consecutively written in a long vector, even if passed as a *A and defined as A[m][n].
+	//
+	// If A(mxn) has m<n the function still returs R(mxn) and Q(nxn), but it is enough to get the submatrices Q(mxm)
+	// and R(mxn) as a valid decomposition. This is what also octave does.
 	 
 
 	//vectors for internal coputations
