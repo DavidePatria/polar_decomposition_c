@@ -524,24 +524,129 @@ static inline void polar_decomposition(float A[3][3], float Q[3][3], float H[3][
 
 // =============================================================================
 
-		// the tilde is used to get part of the output of qr and discrd the remaining
+		// The tilde is used to get part of the output of qr and discrd the remaining
         //[v ~] = qr(v,0); //->cost in flops if implemented by hand: 37 M+24 A+4 O
-		c
-        v = IL*v;  // it looks faster to multiply than to solve lin syst (even though should be same flops)
-        v(1,:) = v(1,:)/D(1,1);
-        v(2,:) = v(2,:)/D(2,2);
-        v(3:4,:) = ID*v(3:4,:)/DD(1);
+		// Since v and Q (resulting from qr decomp) have the same order, the v = Q.
+		// The behaviour of the implemented function for QR works for the present case
+		// since if A(mxn) has m>n the output is the same.
+		int row = 4;
+		int col = 2;
 
-        v = v'*IL;
-		v = v';
+		double Q[row][col];
 
-        v = IL*v;
-        v(1,:) = v(1,:)/D(1,1);
-        v(2,:) = v(2,:)/D(2,2);
+		QR_decomp(v,Q,R,row,col);
+
+		// assigning Q values to v. For the present case size(Q) = size(v)
+		
+		int ii;
+		for (ii=0; ii<row ;ii++) {
+			for (jj=0; jj<col ;jj++) {
+				v[ii][jj] = Q[ii][jj];
+			}
+		}
+
+		// IL is 4x4
+
+		double v_m[4][2];
+		
+		matrix_multiplication(IL, v, v_m, 4,4,2);
+
+        //v = IL*v;  // it looks faster to multiply than to solve lin syst (even though should be same flops)
+
+        //v(1,:) = v(1,:)/D(1,1);
+		for(ii=0; ii<2; ii++) {
+			v_m[0][ii] /= D[0][0];
+		}
+
+        //v(2,:) = v(2,:)/D(2,2);
+		for(ii=0; ii<2; ii++) {
+			v_m[1][ii] /= D[1][1];
+		}
+
+		// a part of v (which is v_m in the current case) needs to be extracted and later concatenated
+		
+        //v(3:4,:) = ID*v(3:4,:)/DD(1);
+		
+		//matrix_multiplication(ID, v_m, v_mm, 0,0,0);
+		// result matrix for the next multiplication, which is a submatrix of v[4,2], so [2,2]
+		double v_res[2][2];
+		// submatrix extracted from v
+		double v_mm[2][2];
+
+		v_mm[0][0] = v[2][0];
+		v_mm[0][1] = v[2][1];
+		v_mm[1][0] = v[3][0];
+		v_mm[1][1] = v[3][1];
+
+		// ID has been previously defined as [2][2]
+		matrix_multiplication(ID, v_m, v_res, 2,2,2);
+
+		// changing the values of the original matrix and diving v_res at the same time
+		v[2][0] = v_res[0][0]/DD[0];
+		v[2][1] = v_res[0][1]/DD[0];
+		v[3][0] = v_res[1][0]/DD[0];
+		v[3][1] = v_res[1][1]/DD[0];
+
+
+		// v_mm and v_res could now be freed, if they where dinamically allocated, but since I am stupido ai chènnòt du só, plis fri de mètrisis fór mi.
+
+
+		// transposed matrix
+		double v_t[2,4];
+
+		v_t[0][0] = v[0][0];
+		v_t[0][1] = v[1][0];
+		v_t[0][2] = v[2][0];
+		v_t[0][3] = v[3][0];
+
+		v_t[1][0] = v[0][1];
+		v_t[1][1] = v[1][1];
+		v_t[1][2] = v[2][1];
+		v_t[1][3] = v[3][1];
+
+
+        // v = v'*IL;
+		// put the result in v
+		matrix_multiply( v_t, IL, v, 2,4,4);
+
+		// traspose may be freed now and another one is required
+		// tranpose v again
+		// v = v';
+
+		// aritransposed matrix
+		double v_tt[2,4];
+
+		v_tt[0][0] = v[0][0];
+		v_tt[1][0] = v[0][1];
+		v_tt[2][0] = v[0][2];
+		v_tt[3][0] = v[0][3];
+
+		v_tt[0][1] = v[1][0];
+		v_tt[1][1] = v[1][1];
+		v_tt[2][1] = v[1][2];
+		v_tt[3][1] = v[1][3];
+
+		// next multiplication, the v on the right hand is transposed
+        // v = IL*v;
+		// equivalent to this
+		// v = IL*v'
+		matrix_multiply( IL, v_tt, v, 2,4,4);
+
+		// dumb to not use anpther for cycle but I'm already loosing my sight
+        // v(1,:) = v(1,:)/D(1,1);
+        // v(2,:) = v(2,:)/D(2,2);
+		for(j=0; j<2; j++) {
+			v[0,j] /= D[0,0];
+			v[1,j] /= D[1,1];
+		};
+
+
         v(3:4,:) = ID*v(3:4,:)/DD(1);
+		
         v = v'*IL;v = v';
                 [v ~] = qr(v,0);
-        H = v'*L;H = -H*D*H';%Cheaper
+        H = v'*L;H = -H*D*H'; %Cheaper
+
         if (fabsf(H(1,2))<1e-15) {
             if ( [H(1][1] > H[1][2] ) {
                 v = v(:,1);
