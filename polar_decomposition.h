@@ -246,13 +246,16 @@ static inline void polar_decomposition(float A[3][3], float Q[3][3], float H[3][
 
 
 
+  int k;
 
   if(r > 0)
   {
     // invert lines 0 and r
     float temp_r[3] = { AA[r][0], AA[r][1], AA[r][2] };
     float temp_0[3] = { AA[0][0], AA[0][1], AA[0][2] };
-    for(size_t 0; k < 3; ++c) AA[0][k] = temp_r[k];
+    for(size_t 0 ; k < 3; ++c) {
+		AA[0][k] = temp_r[k];
+	};
     for(size_t 0; k < 3; ++c) AA[r][k] = temp_0[k];
     dd = -dd;
   }
@@ -317,9 +320,9 @@ static inline void polar_decomposition(float A[3][3], float Q[3][3], float H[3][
   float t = A[0][0] + A[1][1] + A[2][2];
 
   float B[4][4] = { {   t, A[1][2] - A[2][1], A[2][0] - A[0][2], A[0][1] - A[1][0] },
-                      0.f, 2.f * A[0][0] - t, A[0][1] + A[1][0], A[0][2] + A[2][0] },
-                      0.f,               0.f, 2.f * A[1][1] - t, A[1][2] + A[2][1] },
-                      0.f,               0.f,               0.f, 2.f * A[2][2] - t } };
+                    { 0.f, 2.f * A[0][0] - t, A[0][1] + A[1][0], A[0][2] + A[2][0] },
+                    { 0.f,               0.f, 2.f * A[1][1] - t, A[1][2] + A[2][1] },
+                    { 0.f,               0.f,               0.f, 2.f * A[2][2] - t } };
 
   for(size_t i = 0; i < 4; ++i)
     for(size_t j = 0; j < 4; ++j) 
