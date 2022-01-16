@@ -47,6 +47,7 @@
 #include "svd.h"
 // is it necessary?
 #include <stdbool.h>
+#include "QR_decomp.h"
 
 // Note : if you review this code using the original Matlab implementation,
 // remember Matlab indexes arrays from 1, while C starts at 0, so every index needs to be shifted by -1.
