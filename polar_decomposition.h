@@ -368,7 +368,7 @@ static inline void polar_decomposition(float A[3][3], float Q[3][3], float H[3][
 	                  { 0.f, 0.f, 1.f, 0.f },
 	                  { 0.f, 0.f, 0.f, 1.f } };
 	
-	float D[4][4] = { { 0.f } };
+	double D[4][4] = { { 0.f } };
 	
 	// First step
 	r = 3;
@@ -386,7 +386,9 @@ static inline void polar_decomposition(float A[3][3], float Q[3][3], float H[3][
 				BB[i][j] = BB[p[i]][p[j]];
 	}
 	
-	float D = BB[0][0];
+	// according to what the matlab code does D(1) = B(1,1) assigns the first element of
+	// D, despite D being 4x4
+	D[0][0] = BB[0][0];
 	
 	L[1][0] = BB[1][0];
 	L[2][0] = BB[2][0];
@@ -410,9 +412,10 @@ static inline void polar_decomposition(float A[3][3], float Q[3][3], float H[3][
 	 //=============================================================================
 	
 	// is this the right size for v?
-	double v[4];	
+	// v changes size in the "if" case below and needs different handling
+	// double v[4];	
 	
-	DD = D[2][2]*D[3][3]-D[2][3]*D[2][3];
+	float DD = D[2][2]*D[3][3]-D[2][3]*D[2][3];
 	
 	// slamming the cock for now about the case where DD==0
 	//if (DD == 0) {
@@ -479,41 +482,45 @@ static inline void polar_decomposition(float A[3][3], float Q[3][3], float H[3][
 
 // =============================================================================
   
+	// defined outside since they are needed in both cases of if-else
+	float v[4][2];
+	float IL[4][4];
+
 	if (subspa == 1) {
+
 	    //v = [L(2,1)*L(3,2)-L(3,1) L(2,1)*L(4,2)-L(4,1);-L(3,2) -L(4,2);1 0;0 1];
-	  
 		v[0][0] = L[1][0]*L[2][1]-L[2][0];
 		v[0][1] = L[1][0]*L[3][1]-L[3][0];
 		v[1][0] = -L[2][1];
 		v[1][1] = -L[3][1];
 		v[2][0] = 1;
 		v[2][1] = 0;
-		v[3][0] = 0
+		v[3][0] = 0;
 		v[3][1] = 1;
 		
 		// first use of L here, it needs to be defined, after the dimensions are clear
-		  //IL = [1 0 0 0;-L(2,1) 1 0 0;v'];
+		// IL = [1 0 0 0;-L(2,1) 1 0 0;v'];
 		
 		IL[0][0] = 1;
 		IL[0][1] = 0;
 		IL[0][2] = 0;
 		IL[0][3] = 0;
 		
-		IL[1][0] = -L[1,0];
+		IL[1][0] = -L[1][0];
 		IL[1][1] = 0;
 		IL[1][2] = 0;
 		IL[1][3] = 0;
 		
 		// assigning v as transposed already
 		IL[2][0] = v[0][0];
-		IL[2][1] = v[0][1];
-		IL[2][2] = v[0][2];
-		IL[2][3] = v[0][3];
+		IL[2][1] = v[1][0];
+		IL[2][2] = v[2][0];
+		IL[2][3] = v[3][0];
 		
-		IL[3][0] = v[1][0];
+		IL[3][0] = v[0][1];
 		IL[3][1] = v[1][1];
-		IL[3][2] = v[1][2];
-		IL[3][3] = v[1][3];
+		IL[3][2] = v[2][1];
+		IL[3][3] = v[3][1];
 		
 		
 		//==========================================================================
@@ -527,12 +534,13 @@ static inline void polar_decomposition(float A[3][3], float Q[3][3], float H[3][
 		int col = 2;
 		
 		double Q[row][col];
+		double R[row][row];
 		
-		QR_decomp(v,Q,R,row,col);
+		QR_dec(v,Q,R,row,col);
 		
 		// assigning Q values to v. For the present case size(Q) = size(v)
 		
-		int ii;
+		int ii, jj;
 		for (ii=0; ii<row ;ii++) {
 			for (jj=0; jj<col ;jj++) {
 				v[ii][jj] = Q[ii][jj];
@@ -543,7 +551,7 @@ static inline void polar_decomposition(float A[3][3], float Q[3][3], float H[3][
 		
 		double v_m[4][2];
 		
-		matrix_multiplication(IL, v, v_m, 4,4,2);
+		matrix_multiply(IL, v, v_m, 4,4,2);
 		
 		  //v = IL*v;  // it looks faster to multiply than to solve lin syst (even though should be same flops)
 		
@@ -573,20 +581,22 @@ static inline void polar_decomposition(float A[3][3], float Q[3][3], float H[3][
 		v_mm[1][1] = v[3][1];
 		
 		// ID has been previously defined as [2][2]
-		matrix_multiplication(ID, v_m, v_res, 2,2,2);
+		matrix_multiply(ID, v_mm, v_res, 2,2,2);
 		
 		// changing the values of the original matrix and diving v_res at the same time
-		v[2][0] = v_res[0][0]/DD[0];
-		v[2][1] = v_res[0][1]/DD[0];
-		v[3][0] = v_res[1][0]/DD[0];
-		v[3][1] = v_res[1][1]/DD[0];
+		// DD is defined as a float. in the matlab file it is used as D(1).
+		// is it the same as putting DD? is it still a float?
+		v[2][0] = v_res[0][0]/DD;
+		v[2][1] = v_res[0][1]/DD;
+		v[3][0] = v_res[1][0]/DD;
+		v[3][1] = v_res[1][1]/DD;
 		
 		
 		// v_mm and v_res could now be freed, if they where dinamically allocated, but since I am stupido ai chènnòt du só, plis fri de mètrisis fór mi.
 		
 		
 		// transposed matrix
-		double v_t[2,4];
+		double v_t[2][4];
 		
 		v_t[0][0] = v[0][0];
 		v_t[0][1] = v[1][0];
@@ -611,7 +621,7 @@ static inline void polar_decomposition(float A[3][3], float Q[3][3], float H[3][
 		
 		// aritransposed matrix
 		// v = v';
-		double v_tt[2,4];
+		double v_tt[4][2];
 		
 		v_tt[0][0] = v_res1[0][0];
 		v_tt[1][0] = v_res1[0][1];
@@ -635,9 +645,10 @@ static inline void polar_decomposition(float A[3][3], float Q[3][3], float H[3][
 		// dumb to not use anpther for cycle but I'm already loosing my sight
 		  // v(1,:) = v(1,:)/D(1,1);
 		  // v(2,:) = v(2,:)/D(2,2);
+		int j;
 		for(j=0; j<2; j++) {
-			v_res2[0,j] /= D[0,0];
-			v_res2[1,j] /= D[1,1];
+			v_res2[0][j] /= D[0][0];
+			v_res2[1][j] /= D[1][1];
 		};
 		
 		// ID is 2x2
@@ -645,8 +656,8 @@ static inline void polar_decomposition(float A[3][3], float Q[3][3], float H[3][
 		
 		// v(3:4,:) = ID*v(3:4,:)/DD(1);
 		for(j=0; j<2; j++) {
-			v[2,j] = ID[2,j]*D[0,0];
-			v[3,j] = ID[3,j]*D[1,1];
+			v_res[2][j] *= ID[2][j]/DD;
+			v_res[3][j] *= ID[3][j]/DD;
 		};
 	
 	
@@ -690,4 +701,5 @@ static inline void polar_decomposition(float A[3][3], float Q[3][3], float H[3][
 	v(p) = v;
 	
 	*/
- }
+	}
+}
