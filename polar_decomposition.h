@@ -51,22 +51,6 @@
 // Note : if you review this code using the original Matlab implementation,
 // remember Matlab indexes arrays from 1, while C starts at 0, so every index needs to be shifted by -1.
 
-static inline void normalize_array(float *vector) {
-	int ii;
-	float norm = 0;
-	// computing the square of the norm of v
-	for(ii=0; ii<4; ii++){
-		norm += vector[ii]*vector[ii]; 
-	}
-	// squared root of the norm of vector
-	norm = sqrt(norm);
-
-	//dividing each element of v for the norm
-	for(ii=0; ii<4; ii++){
-		vector[ii]/norm;
-	}
-}
-
 //absolute value element wise for a 2x2 matrix
 static inline void abs_matrix_22(float matrix_vals[][2], float matrix_abs[][2]) {
   int i, j;
