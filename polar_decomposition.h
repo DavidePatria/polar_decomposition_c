@@ -53,17 +53,17 @@
 
 #include "svd.h"
 #include <complex.h>
+#include <stdbool.h>
 #include <stdio.h>
 // is it necessary?
-#include "QR_decomp.h"
+// #include "QR_decomp.h"
 
 // Note : if you review this code using the original Matlab implementation,
 // remember Matlab indexes arrays from 1, while C starts at 0, so every index
 // needs to be shifted by -1.
 
 // absolute value element wise for a 2x2 matrix
-static inline void abs_matrix_22(float matrix_vals[][2],
-                                 float matrix_abs[][2]) {
+static inline void abs_matrix_22(float matrix_vals[][2], float matrix_abs[][2]) {
 	int i, j;
 
 	for (i = 0; i < 2; i++) {
@@ -78,17 +78,57 @@ static inline void abs_matrix_22(float matrix_vals[][2],
 	printf("\n");
 }
 
+//==============================================================================
+
+// transform from double index to single one so generic matrix multiply can be used with the result
+// res is in row major order
+void flatten_matrix_4x4(float matrix[4][4], float *flattened) {
+	for (size_t i = 0; i < 4; i++) {
+		for (size_t j = 0; j < 4; j++) {
+			flattened[i * 4 + j] = matrix[i][j];
+		}
+	}
+}
+
+// transform 1D array into a 2D array
+void unflatten_matrix_4x4(double unflattened[4][4], double *matrix) {
+	for (size_t i = 0; i < 3; i++) {
+		for (size_t j = 0; j < 3; j++) {
+			unflattened[i][j] = matrix[i * 3 + j];
+		}
+	}
+}
+
+void flatten_matrix_3x3(float matrix[3][3], float *flattened) {
+	for (size_t i = 0; i < 3; i++) {
+		for (size_t j = 0; j < 3; j++) {
+			flattened[i * 3 + j] = matrix[i][j];
+		}
+	}
+}
+
+// transform 1D array into a 2D array
+void unflatten_matrix_3x3(float unflattened[3][3], float *matrix) {
+	for (size_t i = 0; i < 3; i++) {
+		for (size_t j = 0; j < 3; j++) {
+			unflattened[i][j] = matrix[i * 3 + j];
+		}
+	}
+}
+
+//==============================================================================
+
 // multiply two matrices of any order, assuming that the multiplication is
 // possible
-void matrix_multiply(double *A, double *B, double *RES, int rows_A, int cols_A,
-                     int cols_B) {
+void matrix_multiply(const float *A, const float *B, float *RES, int rows_A, int cols_A, int cols_B) {
 	int ii, jj, kk;
 	int rows_B;
 	double product;
 
-	if (rows_B != cols_A) {
-		printf("operation not allowed for wrong dimensions\n");
-	}
+	// no check, yolo
+	// if (rows_B != cols_A) {
+	// 	printf("operation not allowed for wrong dimensions\n");
+	// }
 
 	// for simplicity of definition. if this below isn't the case the product
 	// isn't possible
@@ -168,14 +208,12 @@ static inline void normalize_array(float *vector, int size) {
 	}
 }
 
-static inline void polar_decomposition(float A[3][3], float Q[3][3],
-                                       float H[3][3]) {
+void polar_decomposition(float A[3][3], float Q[3][3], float H[3][3]) {
 	// Frobenius / L2 norm of the matrice - aka we sum the squares of each
 	// matrice element and take the sqrt
 	const float norm =
-	    sqrtf(A[0][0] * A[0][0] + A[0][1] * A[0][1] + A[0][2] * A[0][2] +
-	          A[1][0] * A[1][0] + A[1][1] * A[1][1] + A[1][2] * A[1][2] +
-	          A[2][0] * A[2][0] + A[2][1] * A[2][1] + A[2][2] * A[2][2]);
+	    sqrtf(A[0][0] * A[0][0] + A[0][1] * A[0][1] + A[0][2] * A[0][2] + A[1][0] * A[1][0] + A[1][1] * A[1][1] +
+	          A[1][2] * A[1][2] + A[2][0] * A[2][0] + A[2][1] * A[2][1] + A[2][2] * A[2][2]);
 
 	// Normalize the matrice A in-place, so A norm is 1
 	for (size_t i = 0; i < 3; i++)
@@ -212,9 +250,7 @@ static inline void polar_decomposition(float A[3][3], float Q[3][3],
 	bool subspa = 0;
 
 	// copy of A
-	float AA[3][3] = {{A[0][0], A[0][1], A[0][2]},
-	                  {A[1][0], A[1][1], A[1][2]},
-	                  {A[2][0], A[2][1], A[2][2]}};
+	float AA[3][3] = {{A[0][0], A[0][1], A[0][2]}, {A[1][0], A[1][1], A[1][2]}, {A[2][0], A[2][1], A[2][2]}};
 
 	size_t r = 0, c = 0;
 	float dd = 1.f;
@@ -268,9 +304,9 @@ static inline void polar_decomposition(float A[3][3], float Q[3][3],
 		// invert columns 0 and c
 		float temp_c[3] = {AA[0][c], AA[1][c], AA[2][c]};
 		float temp_0[3] = {AA[0][0], AA[1][0], AA[2][0]};
-		for (size_t k = 0; k < 3; ++c)
+		for (size_t k = 0; k < 3; k++)
 			AA[k][0] = temp_c[k];
-		for (size_t k = 0; k < 3; ++c)
+		for (size_t k = 0; k < 3; k++)
 			AA[k][c] = temp_0[k];
 		dd = -dd;
 	}
@@ -321,7 +357,7 @@ static inline void polar_decomposition(float A[3][3], float Q[3][3],
 		nit = 16.8f + 2.f * log10f(AU);
 		nit = ceilf(15.f / nit);
 	} else {
-		subspa = 1;
+		subspa = true;
 	}
 
 	if (d == 0)
@@ -331,11 +367,10 @@ static inline void polar_decomposition(float A[3][3], float Q[3][3],
 
 	float t = A[0][0] + A[1][1] + A[2][2];
 
-	float B[4][4] = {
-	    {t, A[1][2] - A[2][1], A[2][0] - A[0][2], A[0][1] - A[1][0]},
-	    {0.f, 2.f * A[0][0] - t, A[0][1] + A[1][0], A[0][2] + A[2][0]},
-	    {0.f, 0.f, 2.f * A[1][1] - t, A[1][2] + A[2][1]},
-	    {0.f, 0.f, 0.f, 2.f * A[2][2] - t}};
+	float B[4][4] = {{t, A[1][2] - A[2][1], A[2][0] - A[0][2], A[0][1] - A[1][0]},
+	                 {0.f, 2.f * A[0][0] - t, A[0][1] + A[1][0], A[0][2] + A[2][0]},
+	                 {0.f, 0.f, 2.f * A[1][1] - t, A[1][2] + A[2][1]},
+	                 {0.f, 0.f, 0.f, 2.f * A[2][2] - t}};
 
 	for (size_t i = 0; i < 4; ++i)
 		for (size_t j = 0; j < 4; ++j)
@@ -353,14 +388,13 @@ static inline void polar_decomposition(float A[3][3], float Q[3][3],
 
 	if (b >= -0.3332f) {
 		// Use analytic formula if matrice is well conditioned
-		double complex delta0 = 1.f + 3. * b;
+		double complex Delta0 = 1.f + 3. * b;
 		double complex Delta1 = -1. + (27. / 16.) * dd * dd + 9. * b;
 		double complex phi    = (Delta1 / Delta0) / csqrt(Delta0);
-		double complex SS =
-		    (4. / 3.) * (1. + ccosf(cacosf(phi) / 3.) * csqrt(Delta0));
-		double complex S = csqrt(SS) / 2.;
+		double complex SS     = (4. / 3.) * (1. + ccosf(cacosf(phi) / 3.) * csqrt(Delta0));
+		double complex S      = csqrt(SS) / 2.;
 
-		x = (float)(creal(S) + 0.5 * sqrt(max(0., creal(-SS + 4. + dd / S))));
+		x = (float)(creal(S) + 0.5 * sqrt(fmaxf(0., creal(-SS + 4. + dd / S))));
 	} else {
 		// Use Newton if matrice is ill conditioned
 		// We use double precision temporarily because the solution can
@@ -389,17 +423,11 @@ static inline void polar_decomposition(float A[3][3], float Q[3][3],
 	// different from matlab because this is an index and matlab starts from 1
 	size_t p[4] = {0, 1, 2, 3};
 
-	float L[4][4] = {{1.f, 0.f, 0.f, 0.f},
-	                 {0.f, 1.f, 0.f, 0.f},
-	                 {0.f, 0.f, 1.f, 0.f},
-	                 {0.f, 0.f, 0.f, 1.f}};
+	float L[4][4] = {{1.f, 0.f, 0.f, 0.f}, {0.f, 1.f, 0.f, 0.f}, {0.f, 0.f, 1.f, 0.f}, {0.f, 0.f, 0.f, 1.f}};
 
 	// not sure about this one initializing
 	// double D[4][4] = {{0.f}};
-	float D[4][4] = {{0.f, 0.f, 0.f, 0.f},
-	                 {0.f, 0.f, 0.f, 0.f},
-	                 {0.f, 0.f, 0.f, 0.f},
-	                 {0.f, 0.f, 0.f, 0.f}};
+	float D[4][4] = {{0.f, 0.f, 0.f, 0.f}, {0.f, 0.f, 0.f, 0.f}, {0.f, 0.f, 0.f, 0.f}, {0.f, 0.f, 0.f, 0.f}};
 
 	// First step
 	r = 3;
@@ -453,7 +481,7 @@ static inline void polar_decomposition(float A[3][3], float Q[3][3],
 		//  another scope so the variables can be reused outside of it
 		{
 			// get row number 1 (which is 2 in matlab)
-			float temp[4]{BB[1][0], BB[1][1], BB[1][2], BB[1][3]};
+			float temp[4] = {BB[1][0], BB[1][1], BB[1][2], BB[1][3]};
 			// now row 1 can be overwirtten
 			BB[1][0] = BB[r][0];
 			BB[1][1] = BB[r][1];
@@ -467,7 +495,7 @@ static inline void polar_decomposition(float A[3][3], float Q[3][3],
 		}
 		{
 			// get column number 1 (which is 2 in matlab)
-			float temp[4]{BB[0][1], BB[1][1], BB[2][1], BB[3][1]};
+			float temp[4] = {BB[0][1], BB[1][1], BB[2][1], BB[3][1]};
 			// copy column r INTO column 1
 			BB[0][1] = BB[0][r];
 			BB[1][1] = BB[1][r];
@@ -481,11 +509,11 @@ static inline void polar_decomposition(float A[3][3], float Q[3][3],
 		}
 		// now swap the rows of L in the same way
 		{
-			float temp[4]{L[1][0], L[1][1], L[1][2], L[1][3]};
-			L[1][0] = L[r][0];
-			L[1][1] = L[r][1];
-			L[1][2] = L[r][2];
-			L[1][3] = L[r][3];
+			float temp[4] = {L[1][0], L[1][1], L[1][2], L[1][3]};
+			L[1][0]       = L[r][0];
+			L[1][1]       = L[r][1];
+			L[1][2]       = L[r][2];
+			L[1][3]       = L[r][3];
 			// now row number r can be overwritten
 			L[r][0] = temp[0];
 			L[r][1] = temp[1];
@@ -495,7 +523,7 @@ static inline void polar_decomposition(float A[3][3], float Q[3][3],
 		// now swap the columns of L in the same way
 		{
 			// get column number 1 (which is 2 in matlab)
-			float temp[4]{L[0][1], L[1][1], L[2][1], L[3][1]};
+			float temp[4] = {L[0][1], L[1][1], L[2][1], L[3][1]};
 			// copy column r INTO column 1
 			L[0][1] = L[0][r];
 			L[1][1] = L[1][r];
@@ -522,6 +550,7 @@ static inline void polar_decomposition(float A[3][3], float Q[3][3],
 	float DD = D[2][2] * D[3][3] - D[2][3] * D[2][3];
 
 	// treat specially, skip for now
+
 	// if (DD == 0) {
 	//    // variables needed for the computations below
 	//    double D_m[2][2];
@@ -565,7 +594,7 @@ static inline void polar_decomposition(float A[3][3], float Q[3][3],
 	//} else {
 	//	//ID = [D(4,4) -D(3,4); -D(3,4) D(3,3)];
 
-	double ID[2][2] = {{D[3][3], D[2][3]}, {D[2][3], D[2][2]}};
+	float ID[2][2] = {{D[3][3], D[2][3]}, {D[2][3], D[2][2]}};
 
 	// =============================================================================
 	//      if max(abs(D(2:3,2:3))) == 0, v =
@@ -745,4 +774,127 @@ static inline void polar_decomposition(float A[3][3], float Q[3][3],
 	// //   v_res[3][j] *= ID[3][j] / DD;
 	// // };
 	//  }
-}
+
+	// going directly for else, subspa = false
+
+	float v[4] = {L[1][0] * L[3][1] + L[2][0] * L[3][2] - L[1][0] * L[3][2] * L[2][1] - L[3][0],
+	              L[3][2] * L[2][1] - L[3][1], -L[3][2], 1};
+	// this would already be defined if the other case for subspa were done
+	float IL[4][4] = {
+	    {1, 0, 0, 0}, {-L[1][0], 1, 0, 0}, {L[2][1] * L[3][2] - L[3][1], -L[3][2], 1, 0}, {v[0], v[1], v[2], v[3]}};
+	float nv = sqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2] + v[3] * v[3]);
+
+	v[0] /= nv;
+	v[1] /= nv;
+	v[2] /= nv;
+	v[3] /= nv;
+
+	// IL isn't modified in the next scope, so the flattened version can be created here
+	float IL_flat[16] = {};
+	flatten_matrix_4x4(IL, IL_flat);
+
+	for (size_t i = 0; i < nit; i++) {
+		// flat array for the result of product
+		float RES[4] = {};
+		matrix_multiply(IL_flat, v, RES, 4, 4, 1);
+		// now copy the result of multiplication into the array
+		v[0] = RES[0];
+		v[1] = RES[1];
+		v[2] = RES[2];
+		v[3] = RES[3];
+
+		v[0] /= D[0][0];
+		v[1] /= D[1][1];
+		// first row of ID by v[2:-1]
+		v[2] = (ID[0][0] * v[2] + ID[0][1] * v[3]) / DD;
+		v[3] = (ID[1][0] * v[2] + ID[1][1] * v[3]) / DD;
+
+		// float RES[4] = {};
+		// this should work given that v can be "transposed" by simply changing sizes in the function
+		matrix_multiply(v, IL_flat, RES, 1, 4, 4);
+		// assign the result of multiplication to v
+		v[0] = RES[0];
+		v[1] = RES[1];
+		v[2] = RES[2];
+		v[3] = RES[3];
+		// this does not matter, right?
+		// v = v';
+
+		nv = sqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2] + v[3] * v[3]);
+		v[0] /= nv;
+		v[1] /= nv;
+		v[2] /= nv;
+		v[3] /= nv;
+	}
+
+	// not 100% sure about this one, though is seems the counterintuitive behaviour of the matlab code
+	v[0] = v[p[0]];
+	v[1] = v[p[1]];
+	v[0] = v[p[2]];
+	v[0] = v[p[3]];
+
+	float v11, v22, v33, v12, v03, v13, v02, v01, v23;
+
+	v11 = 2 * v[1] * v[1];
+	v22 = 2 * v[2] * v[2];
+	v33 = 2 * v[3] * v[3];
+	v12 = 2 * v[1] * v[2];
+	v03 = 2 * v[0] * v[3];
+	v13 = 2 * v[1] * v[3];
+	v02 = 2 * v[0] * v[2];
+	v01 = 2 * v[0] * v[1];
+	v23 = 2 * v[2] * v[3];
+
+	Q[0][0] = 1 - v22 - v33;
+	Q[0][1] = v12 + v03;
+	Q[0][2] = v13 - v02;
+
+	Q[1][0] = v12 - v03;
+	Q[1][1] = 1 - v11 - v33;
+	Q[1][2] = v01 + v23;
+
+	Q[2][0] = v02 + v13;
+	Q[2][1] = v23 - v01;
+	Q[2][2] = 1 - v11 - v22;
+
+	if (d == -1) {
+		Q[0][0] *= -1;
+		Q[0][1] *= -1;
+		Q[0][2] *= -1;
+		Q[1][0] *= -1;
+		Q[1][1] *= -1;
+		Q[1][2] *= -1;
+		Q[2][0] *= -1;
+		Q[2][1] *= -1;
+		Q[2][2] *= -1;
+	};
+
+	// since Q' is only needed for this product it can be stored into a temporary to be used
+	float temp[3][3];
+	temp[0][0] = Q[0][0];
+	temp[0][1] = Q[1][0];
+	temp[0][2] = Q[2][0];
+
+	temp[1][0] = Q[0][1];
+	temp[1][1] = Q[1][1];
+	temp[1][2] = Q[2][1];
+
+	temp[2][0] = Q[0][2];
+	temp[2][1] = Q[1][2];
+	temp[2][2] = Q[2][2];
+
+	// tostore the flattened matrix
+	float Q_t_flat[9];
+	flatten_matrix_3x3(temp, Q_t_flat);
+	// to be unflattened to be assigned to the result
+	float H_flat[9];
+
+	float A_flat[9];
+	flatten_matrix_3x3(A, A_flat);
+
+	matrix_multiply(Q_t_flat, A_flat, H_flat, 3, 3, 3);
+
+	// unflatten_matrix_3x3(H, H_flat);
+	unflatten_matrix_3x3(H, H_flat);
+
+};
