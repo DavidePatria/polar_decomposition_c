@@ -51,14 +51,14 @@
  *
  **/
 
-// define the type for the variables that were previously float as more precision was not though to be necessary
+// define the type for the variables that were previously TYPE as more precision was not though to be necessary
 #define TYPE double
 
 // define which ABS to use based on the chosen type
 #if TYPE == double
 #define ABS(n) fabs(n)
-#elif TYPE == float
-#define ABS(n) fabsf(n)
+#elif TYPE == TYPE
+#define ABS(n) ABS(n)
 #endif
 
 #include "svd.h"
@@ -73,14 +73,14 @@
 // needs to be shifted by -1.
 
 // absolute value element wise for a 2x2 matrix
-static inline void abs_matrix_22(float matrix_vals[][2], float matrix_abs[][2]) {
+static inline void abs_matrix_22(TYPE matrix_vals[][2], TYPE matrix_abs[][2]) {
 	int i, j;
 
 	for (i = 0; i < 2; i++) {
 		for (j = 0; j < 2; j++) {
 			// printf("prima: %f\n dopo:  %f\n", matrix[i][j],
-			// fabsf(matrix[i][j]) );
-			matrix_abs[i][j] = fabsf(matrix_vals[i][j]);
+			// ABS(matrix[i][j]) );
+			matrix_abs[i][j] = ABS(matrix_vals[i][j]);
 			// printf("%f\n", matricella[i][j] );
 		}
 	}
@@ -92,7 +92,7 @@ static inline void abs_matrix_22(float matrix_vals[][2], float matrix_abs[][2]) 
 
 // transform from double index to single one so generic matrix multiply can be used with the result
 // res is in row major order
-void flatten_matrix_4x4(float matrix[4][4], float *flattened) {
+void flatten_matrix_4x4(TYPE matrix[4][4], TYPE *flattened) {
 	for (size_t i = 0; i < 4; i++) {
 		for (size_t j = 0; j < 4; j++) {
 			flattened[i * 4 + j] = matrix[i][j];
@@ -279,21 +279,21 @@ void polar_decomposition(TYPE A[3][3], TYPE Q[3][3], TYPE H[3][3]) {
 	// General / slow path
 
 	// Search index (r, c) of the max element in matrice
-	if (fabsf(A[1][0]) > fabsf(A[0][0]))
+	if (ABS(A[1][0]) > ABS(A[0][0]))
 		r = 1; // c = 0
-	if (fabsf(A[2][0]) > fabsf(A[r][c]))
+	if (ABS(A[2][0]) > ABS(A[r][c]))
 		r = 2; // c = 0
-	if (fabsf(A[0][1]) > fabsf(A[r][c]))
+	if (ABS(A[0][1]) > ABS(A[r][c]))
 		r = 0, c = 1;
-	if (fabsf(A[1][1]) > fabsf(A[r][c]))
+	if (ABS(A[1][1]) > ABS(A[r][c]))
 		r = 1, c = 1;
-	if (fabsf(A[2][1]) > fabsf(A[r][c]))
+	if (ABS(A[2][1]) > ABS(A[r][c]))
 		r = 2, c = 1;
-	if (fabsf(A[0][2]) > fabsf(A[r][c]))
+	if (ABS(A[0][2]) > ABS(A[r][c]))
 		r = 0, c = 2;
-	if (fabsf(A[1][2]) > fabsf(A[r][c]))
+	if (ABS(A[1][2]) > ABS(A[r][c]))
 		r = 1, c = 2;
-	if (fabsf(A[2][2]) > fabsf(A[r][c]))
+	if (ABS(A[2][2]) > ABS(A[r][c]))
 		r = 2, c = 2;
 
 	int k;
@@ -329,11 +329,11 @@ void polar_decomposition(TYPE A[3][3], TYPE Q[3][3], TYPE H[3][3]) {
 	                  {AA[2][1] - AA[2][0] * m0, AA[2][2] - AA[2][0] * m1}};
 
 	r = 0, c = 0;
-	if (fabsf(AA[1][0]) > fabsf(AA[0][0]))
+	if (ABS(AA[1][0]) > ABS(AA[0][0]))
 		r = 1; // c = 0
-	if (fabsf(AA[0][1]) > fabsf(AA[r][c]))
+	if (ABS(AA[0][1]) > ABS(AA[r][c]))
 		r = 0, c = 1;
-	if (fabsf(AA[1][1]) > fabsf(AA[r][c]))
+	if (ABS(AA[1][1]) > ABS(AA[r][c]))
 		r = 1, c = 1;
 
 	if (r == 1)
@@ -359,7 +359,7 @@ void polar_decomposition(TYPE A[3][3], TYPE Q[3][3], TYPE H[3][3]) {
 	if (U[2] < 0)
 		d = -d;
 
-	TYPE AU = fabsf(U[2]);
+	TYPE AU = ABS(U[2]);
 
 	TYPE nit;
 
@@ -389,6 +389,7 @@ void polar_decomposition(TYPE A[3][3], TYPE Q[3][3], TYPE H[3][3]) {
 	B[1][0] = B[0][1];
 	B[2][0] = B[0][2];
 	B[3][0] = B[0][3];
+
 	B[2][1] = B[1][2];
 	B[3][1] = B[1][3];
 	B[3][2] = B[2][3];
@@ -493,57 +494,35 @@ void polar_decomposition(TYPE A[3][3], TYPE Q[3][3], TYPE H[3][3]) {
 			// get row number 1 (which is 2 in matlab)
 			TYPE temp[4] = {BB[1][0], BB[1][1], BB[1][2], BB[1][3]};
 			// now row 1 can be overwirtten
-			BB[1][0] = BB[r][0];
-			BB[1][1] = BB[r][1];
-			BB[1][2] = BB[r][2];
-			BB[1][3] = BB[r][3];
-			// now row number r can be overwritten
-			BB[r][0] = temp[0];
-			BB[r][1] = temp[1];
-			BB[r][2] = temp[2];
-			BB[r][3] = temp[3];
+			for (size_t i = 0; i < 4; i++) {
+				BB[1][i] = BB[r][i];
+				BB[r][i] = temp[i];
+			}
 		}
 		{
 			// get column number 1 (which is 2 in matlab)
 			TYPE temp[4] = {BB[0][1], BB[1][1], BB[2][1], BB[3][1]};
-			// copy column r INTO column 1
-			BB[0][1] = BB[0][r];
-			BB[1][1] = BB[1][r];
-			BB[2][1] = BB[2][r];
-			BB[3][1] = BB[3][r];
-			// now copy column 1 into column r
-			BB[0][r] = temp[0];
-			BB[1][r] = temp[1];
-			BB[2][r] = temp[2];
-			BB[3][r] = temp[3];
+			for (size_t i = 0; i < 4; i++) {
+				BB[i][1] = BB[i][r];
+				BB[i][r] = temp[i];
+			}
 		}
 		// now swap the rows of L in the same way
 		{
 			TYPE temp[4] = {L[1][0], L[1][1], L[1][2], L[1][3]};
-			L[1][0]      = L[r][0];
-			L[1][1]      = L[r][1];
-			L[1][2]      = L[r][2];
-			L[1][3]      = L[r][3];
-			// now row number r can be overwritten
-			L[r][0] = temp[0];
-			L[r][1] = temp[1];
-			L[r][2] = temp[2];
-			L[r][3] = temp[3];
+			for (size_t i = 0; i < 3; i++) {
+				L[1][i] = L[r][i];
+				L[r][i] = temp[i];
+			}
 		}
 		// now swap the columns of L in the same way
 		{
 			// get column number 1 (which is 2 in matlab)
 			TYPE temp[4] = {L[0][1], L[1][1], L[2][1], L[3][1]};
-			// copy column r INTO column 1
-			L[0][1] = L[0][r];
-			L[1][1] = L[1][r];
-			L[2][1] = L[2][r];
-			L[3][1] = L[3][r];
-			// now copy column 1 into column r
-			L[0][r] = temp[0];
-			L[1][r] = temp[1];
-			L[2][r] = temp[2];
-			L[3][r] = temp[3];
+			for (size_t i = 0; i < 3; i++) {
+				L[i][1] = L[i][r];
+				L[i][r] = temp[i];
+			}
 		}
 	}
 
@@ -868,30 +847,22 @@ void polar_decomposition(TYPE A[3][3], TYPE Q[3][3], TYPE H[3][3]) {
 	Q[2][2] = 1 - v11 - v22;
 
 	if (d == -1) {
-		Q[0][0] *= -1;
-		Q[0][1] *= -1;
-		Q[0][2] *= -1;
-		Q[1][0] *= -1;
-		Q[1][1] *= -1;
-		Q[1][2] *= -1;
-		Q[2][0] *= -1;
-		Q[2][1] *= -1;
-		Q[2][2] *= -1;
+		// invert th sign of every element of Q
+		for (size_t i = 0; i < 3; i++) {
+			for (size_t j = 0; j < 3; j++) {
+				Q[i][j] *= -1;
+			}
+		}
 	};
 
 	// since Q' is only needed for this product it can be stored into a temporary to be used
 	TYPE temp[3][3];
-	temp[0][0] = Q[0][0];
-	temp[0][1] = Q[1][0];
-	temp[0][2] = Q[2][0];
 
-	temp[1][0] = Q[0][1];
-	temp[1][1] = Q[1][1];
-	temp[1][2] = Q[2][1];
-
-	temp[2][0] = Q[0][2];
-	temp[2][1] = Q[1][2];
-	temp[2][2] = Q[2][2];
+	for (size_t i = 0; i < 3; i++) {
+		for (size_t j = 0; j < 3; j++) {
+			temp[j][i] = Q[i][j];
+		}
+	}
 
 	// tostore the flattened matrix
 	TYPE Q_t_flat[9];
