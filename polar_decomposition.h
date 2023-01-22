@@ -57,8 +57,10 @@
 // define which ABS to use based on the chosen type
 #if TYPE == double
 #define ABS(n) fabs(n)
+#define SQRT(n) sqrt(n)
 #elif TYPE == TYPE
 #define ABS(n) ABS(n)
+#define SQRT(n) sqrtf(n)
 #endif
 
 #include "svd.h"
@@ -174,26 +176,6 @@ static inline double max_val_matrix_22(TYPE matrice[][2]) {
 	return max;
 }
 
-// redefined below? che cazzo succede?
-// static inline void polar_decomposition(TYPE A[3][3], TYPE Q[3][3], TYPE
-// H[3][3])
-// {
-//  // Frobenius / L2 norm of the matrice - aka we sum the squares of each
-//  matrice element and take the sqrt
-//	TYPE max;
-//	int i,j;
-//    const TYPE norm = sqrtf(A[0][0] * A[0][0] + A[0][1] * A[0][1]  + A[0][2]
-//    * A[0][2] );
-//	for(i = 0; i < 2; i++) {
-//		for(j = 0; j < 2; j++){
-//			if (matrice[i][j] > max) {
-//				max = matrice[i][j];
-//			}
-//		}
-//	}
-//	return max;
-//}
-
 static inline void normalize_array(TYPE *vector, int size) {
 	int ii;
 	TYPE norm = 0;
@@ -222,8 +204,8 @@ void polar_decomposition(TYPE A[3][3], TYPE Q[3][3], TYPE H[3][3]) {
 	// Frobenius / L2 norm of the matrice - aka we sum the squares of each
 	// matrice element and take the sqrt
 	const TYPE norm =
-	    sqrtf(A[0][0] * A[0][0] + A[0][1] * A[0][1] + A[0][2] * A[0][2] + A[1][0] * A[1][0] + A[1][1] * A[1][1] +
-	          A[1][2] * A[1][2] + A[2][0] * A[2][0] + A[2][1] * A[2][1] + A[2][2] * A[2][2]);
+	    SQRT(A[0][0] * A[0][0] + A[0][1] * A[0][1] + A[0][2] * A[0][2] + A[1][0] * A[1][0] + A[1][1] * A[1][1] +
+	         A[1][2] * A[1][2] + A[2][0] * A[2][0] + A[2][1] * A[2][1] + A[2][2] * A[2][2]);
 
 	// Normalize the matrice A in-place, so A norm is 1
 	for (size_t i = 0; i < 3; i++)
@@ -297,15 +279,17 @@ void polar_decomposition(TYPE A[3][3], TYPE Q[3][3], TYPE H[3][3]) {
 		r = 2, c = 2;
 
 	int k;
+	// BUONO FINO A QUI
 
 	if (r > 0) {
 		// invert lines 0 and r
 		TYPE temp_r[3] = {AA[r][0], AA[r][1], AA[r][2]};
 		TYPE temp_0[3] = {AA[0][0], AA[0][1], AA[0][2]};
-		for (size_t k = 0; k < 3; ++k) {
+
+		for (size_t k = 0; k < 3; k++) {
 			AA[0][k] = temp_r[k];
 		};
-		for (size_t k = 0; k < 3; ++k)
+		for (size_t k = 0; k < 3; k++)
 			AA[r][k] = temp_0[k];
 		dd = -dd;
 	}
@@ -397,6 +381,7 @@ void polar_decomposition(TYPE A[3][3], TYPE Q[3][3], TYPE H[3][3]) {
 	// Find largest eigenvalue
 	TYPE x;
 
+	// ISSUE: possibile cause of the problem
 	if (b >= -0.3332f) {
 		// Use analytic formula if matrice is well conditioned
 		double complex Delta0 = 1.f + 3. * b;
@@ -420,6 +405,7 @@ void polar_decomposition(TYPE A[3][3], TYPE Q[3][3], TYPE H[3][3]) {
 		}
 		x = (TYPE)x_temp;
 	}
+	// X OUT OF HERE SEEMS TO BE DIFFERENT FROM THE MATLAB ONE
 
 	// Again, don't do the quick path
 	TYPE BB[4][4];
@@ -490,39 +476,33 @@ void polar_decomposition(TYPE A[3][3], TYPE Q[3][3], TYPE H[3][3]) {
 
 		// BB([2 r(1)],:) = BB([r(1) 2],:);
 		//  another scope so the variables can be reused outside of it
-		{
-			// get row number 1 (which is 2 in matlab)
-			TYPE temp[4] = {BB[1][0], BB[1][1], BB[1][2], BB[1][3]};
-			// now row 1 can be overwirtten
-			for (size_t i = 0; i < 4; i++) {
-				BB[1][i] = BB[r][i];
-				BB[r][i] = temp[i];
-			}
+		// get row number 1 (which is 2 in matlab)
+		// TYPE temp_q[4] = {BB[1][0], BB[1][1],BB[1][2],BB[1][3]};
+		TYPE temp[4];
+		// now row 1 can be overwirtten
+		for (size_t i = 0; i < 4; i++) {
+			temp[i]  = BB[1][i];
+			BB[1][i] = BB[r][i];
+			BB[r][i] = temp[i];
 		}
-		{
-			// get column number 1 (which is 2 in matlab)
-			TYPE temp[4] = {BB[0][1], BB[1][1], BB[2][1], BB[3][1]};
-			for (size_t i = 0; i < 4; i++) {
-				BB[i][1] = BB[i][r];
-				BB[i][r] = temp[i];
-			}
+		// get column number 1 (which is 2 in matlab)
+		for (size_t i = 0; i < 4; i++) {
+			temp[i]  = BB[i][1];
+			BB[i][1] = BB[i][r];
+			BB[i][r] = temp[i];
 		}
 		// now swap the rows of L in the same way
-		{
-			TYPE temp[4] = {L[1][0], L[1][1], L[1][2], L[1][3]};
-			for (size_t i = 0; i < 3; i++) {
-				L[1][i] = L[r][i];
-				L[r][i] = temp[i];
-			}
+		for (size_t i = 0; i < 3; i++) {
+			temp[i] = L[1][i];
+			L[1][i] = L[r][i];
+			L[r][i] = temp[i];
 		}
 		// now swap the columns of L in the same way
-		{
-			// get column number 1 (which is 2 in matlab)
-			TYPE temp[4] = {L[0][1], L[1][1], L[2][1], L[3][1]};
-			for (size_t i = 0; i < 3; i++) {
-				L[i][1] = L[i][r];
-				L[i][r] = temp[i];
-			}
+		// get column number 1 (which is 2 in matlab)
+		for (size_t i = 0; i < 3; i++) {
+			temp[i] = L[i][1];
+			L[i][1] = L[i][r];
+			L[i][r] = temp[i];
 		}
 	}
 
@@ -538,259 +518,31 @@ void polar_decomposition(TYPE A[3][3], TYPE Q[3][3], TYPE H[3][3]) {
 
 	TYPE DD = D[2][2] * D[3][3] - D[2][3] * D[2][3];
 
-	// treat specially, skip for now
-
-	// if (DD == 0) {
-	//    // variables needed for the computations below
-	//    double D_m[2][2];
-	//    double abs_matrix_22[2][2];
-	//    double max;
-	//	// south-est minor of D
-	//	D_m[0][0] = D[1][1];
-	//	D_m[0][1] = D[1][2];
-	//	D_m[1][1] = D[2][2];
-	//	D_m[1][0] = D[2][1];
-	//	// absolute value of each element written on matrix_abs
-	//	abs_matrix_22( D_m, matrix_abs);
-	//	// max among all the elements
-	//	max = max_val_matrix_22(abs_matrix);
-
-	//	if(max == 0) {
-	//		v[0] = L[1][0]*L[3][1]-L[3][0];
-	//		v[1] = -L[3][1];
-	//		v[2] = 0;
-	//		v[3] = 1;
-
-	//		int ii;
-	//		double norm = 0;
-
-	//		// computing the square of the norm of v
-	//		for(ii=0; ii<4; ii++){
-	//			norm += v[ii]*v[ii];
-	//		}
-	//		// squared root of the norm of v
-	//		norm = sqrt(norm);
-
-	//		//dividing each element of v for the norm
-	//		for(ii=0; ii<4; ii++){
-	//			v[ii]/norm;
-	//		}
-	//	} else {
-	//		// NOT COMPLETED AS 'null' IS A PAIN IN THE ASS
-	//		v = L'\[0;0;null(D(2:3,2:3))];
-	//		v = v/norm(v);
-	//	  }
-	//} else {
-	//	//ID = [D(4,4) -D(3,4); -D(3,4) D(3,3)];
+	// skip DD == 0
 
 	TYPE ID[2][2] = {{D[3][3], D[2][3]}, {D[2][3], D[2][2]}};
 
-	// =============================================================================
-	//      if max(abs(D(2:3,2:3))) == 0, v =
-	//      [L(1,0)*L(3,1)-L(3,0);-L(3,1);0;1];
-	//  		v = v/norm(v);
-	//      else
-	//          v = L'\[0;0;null(D(2:3,2:3))];v = v/norm(v);
-	//      end
-	//  else
-	//  ID = [D(3,3) -D(2,3); -D(2,3) D(2,2)];
-	// =============================================================================
-
-	// =============================================================================
-
-	// defined outside since they are needed in both cases of if-else
-
-	//  if (subspa == 1) {
-	//
-	// TYPE v[4][2] = {{L[1][0] * L[2][1] - L[2][0], L[1][0] * L[3][1] -
-	// L[3][0]},
-	//                  {-L[2][1], -L[3][1]},
-	//                  {1, 0},
-	//                  {0, 1}};
-	//
-	// TYPE IL[4][4] = {{1, 0, 0, 0},
-	//                   {-L[1][0], 0, 0, 0},
-	//                   {v[0][0], v[1][0], v[2][0], v[3][0]},
-	//                   {v[0][1], v[1][1], v[2][1], v[3][1]}};
-	//
-	// // v = [L(2,1)*L(3,2)-L(3,1) L(2,1)*L(4,2)-L(4,1);-L(3,2) -L(4,2);1 0;0
-	// 1];
-	//
-	// // first use of L here, it needs to be defined, after the dimensions are
-	// // clear IL = [1 0 0 0;-L(2,1) 1 0 0;v'];
-	//
-	// //==========================================================================
-	//
-	// // The tilde is used to get part of the output of qr and discrd the
-	// // remaining
-	// //[v ~] = qr(v,0); //->cost in flops if implemented by hand: 37 M+24 A+4
-	// O
-	// // Since v and Q (resulting from qr decomp) have the same order, the v =
-	// Q.
-	// // The behaviour of the implemented function for QR works for the present
-	// // case since if A(mxn) has m>n the output is the same.
-	// int row = 4;
-	// int col = 2;
-	//
-	// double Q[row][col];
-	// double R[row][row];
-	//
-	// QR_dec(v, Q, R, row, col);
-	//
-	// // assigning Q values to v. For the present case size(Q) = size(v)
-	//
-	// int ii, jj;
-	// for (ii = 0; ii < row; ii++) {
-	//   for (jj = 0; jj < col; jj++) {
-	// 	v[ii][jj] = Q[ii][jj];
-	//   }
-	// }
-	//
-	// // IL is 4x4
-	//
-	// double v_m[4][2];
-	//
-	// matrix_multiply(IL, v, v_m, 4, 4, 2);
-	//
-	// // v = IL*v;  // it looks faster to multiply than to solve lin syst (even
-	// // though should be same flops)
-	//
-	// // v(1,:) = v(1,:)/D(1,1);
-	// for (ii = 0; ii < 2; ii++) {
-	//   v_m[0][ii] /= D[0][0];
-	// }
-	//
-	// // v(2,:) = v(2,:)/D(2,2);
-	// for (ii = 0; ii < 2; ii++) {
-	//   v_m[1][ii] /= D[1][1];
-	// }
-	//
-	// // a part of v (which is v_m in the current case) needs to be extracted
-	// and
-	// // later concatenated
-	//
-	// // v(3:4,:) = ID*v(3:4,:)/DD(1);
-	//
-	// // matrix_multiplication(ID, v_m, v_mm, 0,0,0);
-	// //  result matrix for the next multiplication, which is a submatrix of
-	// //  v[4,2], so [2,2]
-	// double v_res[2][2];
-	// // submatrix extracted from v
-	// double v_mm[2][2];
-	//
-	// v_mm[0][0] = v[2][0];
-	// v_mm[0][1] = v[2][1];
-	// v_mm[1][0] = v[3][0];
-	// v_mm[1][1] = v[3][1];
-	//
-	// // ID has been previously defined as [2][2]
-	// matrix_multiply(ID, v_mm, v_res, 2, 2, 2);
-	//
-	// // changing the values of the original matrix and diving v_res at the
-	// same
-	// // time DD is defined as a TYPE. in the matlab file it is used as D(1).
-	// is
-	// // it the same as putting DD? is it still a TYPE?
-	// v[2][0] = v_res[0][0] / DD;
-	// v[2][1] = v_res[0][1] / DD;
-	// v[3][0] = v_res[1][0] / DD;
-	// v[3][1] = v_res[1][1] / DD;
-	//
-	// // v_mm and v_res could now be freed, if they where dinamically
-	// allocated,
-	// // but since I am stupido ai chènnòt du só, plis fri de mètrisis fór mi.
-	//
-	// // transposed matrix
-	// double v_t[2][4];
-	//
-	// v_t[0][0] = v[0][0];
-	// v_t[0][1] = v[1][0];
-	// v_t[0][2] = v[2][0];
-	// v_t[0][3] = v[3][0];
-	//
-	// v_t[1][0] = v[0][1];
-	// v_t[1][1] = v[1][1];
-	// v_t[1][2] = v[2][1];
-	// v_t[1][3] = v[3][1];
-	//
-	// // v = v'*IL;
-	// // put the result in v
-	// // need for a temporary matrix since v changes size
-	// double v_res1[2][4];
-	// matrix_multiply(v_t, IL, v_res1, 2, 4, 4);
-	// // after this v is 2x4
-	//
-	// // traspose may be freed now and another one is required
-	//
-	// // aritransposed matrix
-	// // v = v';
-	// double v_tt[4][2];
-	//
-	// v_tt[0][0] = v_res1[0][0];
-	// v_tt[1][0] = v_res1[0][1];
-	// v_tt[2][0] = v_res1[0][2];
-	// v_tt[3][0] = v_res1[0][3];
-	//
-	// v_tt[0][1] = v_res1[1][0];
-	// v_tt[1][1] = v_res1[1][1];
-	// v_tt[2][1] = v_res1[1][2];
-	// v_tt[3][1] = v_res1[1][3];
-	//
-	// // next multiplication, the v on the right hand is transposed
-	// // from the previous operation
-	// // v = IL*v;
-	// // equivalent to this
-	// // v = IL*v'
-	// double v_res2[4][2];
-	// matrix_multiply(IL, v_tt, v_res2, 4, 4, 2);
-	// // v the result is now 4x2
-	//
-	// // dumb to not use anpther for cycle but I'm already loosing my sight
-	// // v(1,:) = v(1,:)/D(1,1);
-	// // v(2,:) = v(2,:)/D(2,2);
-	// int j;
-	// for (j = 0; j < 2; j++) {
-	//   v_res2[0][j] /= D[0][0];
-	//   v_res2[1][j] /= D[1][1];
-	// };
-	//
-	// // ID is 2x2
-	// // double sub_v[2][2];
-	//
-	// // v(3:4,:) = ID*v(3:4,:)/DD(1);
-	// // for (j = 0; j < 2; j++) {
-	// //   v_res[2][j] *= ID[2][j] / DD;
-	// //   v_res[3][j] *= ID[3][j] / DD;
-	// // };
-	//  }
-
+	// SKIP SUBSPA == 1
 	// going directly for else, subspa = false
 
 	TYPE v[4] = {L[1][0] * L[3][1] + L[2][0] * L[3][2] - L[1][0] * L[3][2] * L[2][1] - L[3][0],
 	             L[3][2] * L[2][1] - L[3][1], -L[3][2], 1};
 	// this would already be defined if the other case for subspa were done
 	TYPE IL[4][4] = {
-	    {1, 0, 0, 0}, {-L[1][0], 1, 0, 0}, {L[2][1] * L[3][2] - L[3][1], -L[3][2], 1, 0}, {v[0], v[1], v[2], v[3]}};
-	TYPE nv = sqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2] + v[3] * v[3]);
+	    {1, 0, 0, 0}, {-L[1][0], 1, 0, 0}, {L[1][0] * L[2][1] - L[2][0], -L[2][1], 1, 0}, {v[0], v[1], v[2], v[3]}};
 
-	v[0] /= nv;
-	v[1] /= nv;
-	v[2] /= nv;
-	v[3] /= nv;
-
-	// IL isn't modified in the next scope, so the flattened version can be created here
-	TYPE IL_flat[16] = {};
-	flatten_matrix_4x4(IL, IL_flat);
+	// normalize array
+	normalize_array(v, 4);
 
 	for (size_t i = 0; i < nit; i++) {
 		// flat array for the result of product
-		TYPE RES[4] = {};
-		matrix_multiply(IL_flat, v, RES, 4, 4, 1);
+		TYPE RES[4];
+		// matrix_multiply(IL_flat, v, RES, 4, 4, 1);
+		matrix_multiply(*IL, v, RES, 4, 4, 1);
 		// now copy the result of multiplication into the array
-		v[0] = RES[0];
-		v[1] = RES[1];
-		v[2] = RES[2];
-		v[3] = RES[3];
+		for (size_t i = 0; i < 4; i++) {
+			v[i] = RES[i];
+		}
 
 		v[0] /= D[0][0];
 		v[1] /= D[1][1];
@@ -800,23 +552,18 @@ void polar_decomposition(TYPE A[3][3], TYPE Q[3][3], TYPE H[3][3]) {
 
 		// TYPE RES[4] = {};
 		// this should work given that v can be "transposed" by simply changing sizes in the function
-		matrix_multiply(v, IL_flat, RES, 1, 4, 4);
+		matrix_multiply(v, *IL, RES, 1, 4, 4);
 		// assign the result of multiplication to v
-		v[0] = RES[0];
-		v[1] = RES[1];
-		v[2] = RES[2];
-		v[3] = RES[3];
+		for (size_t i = 0; i < 4; i++) {
+			v[i] = RES[i];
+		}
 		// this does not matter, right?
 		// v = v';
-
-		nv = sqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2] + v[3] * v[3]);
-		v[0] /= nv;
-		v[1] /= nv;
-		v[2] /= nv;
-		v[3] /= nv;
+		normalize_array(v, 4);
 	}
 
 	// not 100% sure about this one, though is seems the counterintuitive behaviour of the matlab code
+	// TODO: check
 	v[0] = v[p[0]];
 	v[1] = v[p[1]];
 	v[0] = v[p[2]];
@@ -824,15 +571,18 @@ void polar_decomposition(TYPE A[3][3], TYPE Q[3][3], TYPE H[3][3]) {
 
 	TYPE v11, v22, v33, v12, v03, v13, v02, v01, v23;
 
+	v01 = 2 * v[0] * v[1];
+	v02 = 2 * v[0] * v[2];
+	v03 = 2 * v[0] * v[3];
+
 	v11 = 2 * v[1] * v[1];
 	v22 = 2 * v[2] * v[2];
 	v33 = 2 * v[3] * v[3];
+
 	v12 = 2 * v[1] * v[2];
-	v03 = 2 * v[0] * v[3];
 	v13 = 2 * v[1] * v[3];
-	v02 = 2 * v[0] * v[2];
-	v01 = 2 * v[0] * v[1];
 	v23 = 2 * v[2] * v[3];
+
 
 	Q[0][0] = 1 - v22 - v33;
 	Q[0][1] = v12 + v03;
@@ -856,29 +606,32 @@ void polar_decomposition(TYPE A[3][3], TYPE Q[3][3], TYPE H[3][3]) {
 	};
 
 	// since Q' is only needed for this product it can be stored into a temporary to be used
-	TYPE temp[3][3];
+	TYPE Q_t[3][3];
 
 	for (size_t i = 0; i < 3; i++) {
 		for (size_t j = 0; j < 3; j++) {
-			temp[j][i] = Q[i][j];
+			Q_t[j][i] = Q[i][j];
 		}
 	}
 
 	// tostore the flattened matrix
-	TYPE Q_t_flat[9];
-	flatten_matrix_3x3(temp, Q_t_flat);
+	// TYPE Q_t_flat[9];
+	// flatten_matrix_3x3(temp, Q_t_flat);
 	// to be unflattened to be assigned to the result
-	TYPE H_flat[9];
+	// TYPE H_flat[9];
 
-	TYPE A_flat[9];
-	flatten_matrix_3x3(A, A_flat);
+	// TYPE A_flat[9];
+	// flatten_matrix_3x3(A, A_flat);
 
-	matrix_multiply(Q_t_flat, A_flat, H_flat, 3, 3, 3);
+	matrix_multiply(*Q_t, *A, *H, 3, 3, 3);
 	// multiply by the norm again
 	for (size_t jj = 0; jj < 9; jj++) {
-		H_flat[jj] *= norm;
+		(*H)[jj] *= norm;
+		// also A was normalized at the beginning
+		(*A)[jj] *= norm;
 	}
 
 	// unflatten_matrix_3x3(H, H_flat);
-	unflatten_matrix_3x3(H, H_flat);
+	// unflatten_matrix_3x3(H, H_flat);
+	// unflatten_matrix_3x3(A, A_flat);
 };
