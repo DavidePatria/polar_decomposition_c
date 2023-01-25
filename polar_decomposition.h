@@ -865,20 +865,11 @@ void polar_decomposition(TYPE A[3][3], TYPE Q[3][3], TYPE H[3][3]) {
 	}
 
 	// tostore the flattened matrix
-	TYPE Q_t_flat[9];
-	flatten_matrix_3x3(temp, Q_t_flat);
 	// to be unflattened to be assigned to the result
-	TYPE H_flat[9];
 
-	TYPE A_flat[9];
-	flatten_matrix_3x3(A, A_flat);
-
-	matrix_multiply(Q_t_flat, A_flat, H_flat, 3, 3, 3);
+	matrix_multiply(*(temp), *(A), *(H), 3, 3, 3);
 	// multiply by the norm again
 	for (size_t jj = 0; jj < 9; jj++) {
-		H_flat[jj] *= norm;
+		*(H)[jj] *= norm;
 	}
-
-	// unflatten_matrix_3x3(H, H_flat);
-	unflatten_matrix_3x3(H, H_flat);
 };
