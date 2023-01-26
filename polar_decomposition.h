@@ -139,19 +139,12 @@ static inline void normalize_array(TYPE* vector, int size) {
 	int ii;
 	TYPE norm = 0;
 
-	// size = sizeof(vector)/sizeof(vector[0]);
-
-	// printf("lunghezza nella funzione: %d\n", size );
-	// printf("lunghezza: %d\n", sizeof(vector));
-
 	// computing the square of the norm of v
 	for (ii = 0; ii < 4; ii++) {
 		norm += vector[ii] * vector[ii];
 	}
 	// squared root of the norm of v
 	norm = SQRT(norm);
-
-	// printf("norm is: %f\n", norm);
 
 	// dividing each element of v for the norm
 	for (ii = 0; ii < size; ii++) {
