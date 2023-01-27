@@ -94,7 +94,7 @@ static inline void abs_matrix_22(TYPE matrix_vals[][2], TYPE matrix_abs[][2]) {
 
 // transform from double index to single one so generic matrix multiply can be used with the result
 // res is in row major order
-void flatten_matrix_4x4(TYPE matrix[4][4], TYPE *flattened) {
+void flatten_matrix_4x4(TYPE matrix[4][4], TYPE* flattened) {
 	for (size_t i = 0; i < 4; i++) {
 		for (size_t j = 0; j < 4; j++) {
 			flattened[i * 4 + j] = matrix[i][j];
@@ -102,49 +102,13 @@ void flatten_matrix_4x4(TYPE matrix[4][4], TYPE *flattened) {
 	}
 }
 
-// transform 1D array into a 2D array
-void unflatten_matrix_4x4(double unflattened[4][4], double *matrix) {
-	for (size_t i = 0; i < 3; i++) {
-		for (size_t j = 0; j < 3; j++) {
-			unflattened[i][j] = matrix[i * 3 + j];
-		}
-	}
-}
-
-void flatten_matrix_3x3(TYPE matrix[3][3], TYPE *flattened) {
-	for (size_t i = 0; i < 3; i++) {
-		for (size_t j = 0; j < 3; j++) {
-			flattened[i * 3 + j] = matrix[i][j];
-		}
-	}
-}
-
-// transform 1D array into a 2D array
-void unflatten_matrix_3x3(TYPE unflattened[3][3], TYPE *matrix) {
-	for (size_t i = 0; i < 3; i++) {
-		for (size_t j = 0; j < 3; j++) {
-			unflattened[i][j] = matrix[i * 3 + j];
-		}
-	}
-}
-
 //==============================================================================
 
 // multiply two matrices of any order, assuming that the multiplication is
-// possible
-void matrix_multiply(const TYPE *A, const TYPE *B, TYPE *RES, int rows_A, int cols_A, int cols_B) {
+// possible, so no checks done
+void matrix_multiply(const TYPE* A, const TYPE* B, TYPE* RES, int rows_A, int cols_A, int cols_B) {
 	int ii, jj, kk;
-	int rows_B;
-	double product;
-
-	// no check, yolo
-	// if (rows_B != cols_A) {
-	// 	printf("operation not allowed for wrong dimensions\n");
-	// }
-
-	// for simplicity of definition. if this below isn't the case the product
-	// isn't possible
-	rows_B = cols_A;
+	TYPE product;
 
 	product = 0;
 
@@ -160,23 +124,18 @@ void matrix_multiply(const TYPE *A, const TYPE *B, TYPE *RES, int rows_A, int co
 }
 
 // get the value of the greater element of a 2x2 matrix
-// if anyone knows how to make the function work with a 'TYPE **matrice' I'm
-// interested
-static inline double max_val_matrix_22(TYPE matrice[][2]) {
-	int i, j;
+TYPE max_val_matrix(TYPE* matrice, size_t size) {
 	TYPE max;
-	max = matrice[0][0];
-	for (i = 0; i < 2; i++) {
-		for (j = 0; j < 2; j++) {
-			if (matrice[i][j] > max) {
-				max = matrice[i][j];
-			}
+
+	for (size_t i = 0; i < size; i++) {
+		if (matrice[i] > max) {
+			max = matrice[i];
 		}
 	}
 	return max;
 }
 
-static inline void normalize_array(TYPE *vector, int size) {
+static inline void normalize_array(TYPE* vector, int size) {
 	int ii;
 	TYPE norm = 0;
 
@@ -190,7 +149,7 @@ static inline void normalize_array(TYPE *vector, int size) {
 		norm += vector[ii] * vector[ii];
 	}
 	// squared root of the norm of v
-	norm = sqrt(norm);
+	norm = SQRT(norm);
 
 	// printf("norm is: %f\n", norm);
 
@@ -582,7 +541,6 @@ void polar_decomposition(TYPE A[3][3], TYPE Q[3][3], TYPE H[3][3]) {
 	v12 = 2 * v[1] * v[2];
 	v13 = 2 * v[1] * v[3];
 	v23 = 2 * v[2] * v[3];
-
 
 	Q[0][0] = 1 - v22 - v33;
 	Q[0][1] = v12 + v03;
