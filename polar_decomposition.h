@@ -59,7 +59,7 @@
 #define ABS(n) fabs(n)
 #define SQRT(n) sqrt(n)
 #elif TYPE == TYPE
-#define ABS(n) ABS(n)
+#define ABS(n) fabs(n)
 #define SQRT(n) sqrtf(n)
 #endif
 
@@ -74,90 +74,21 @@
 // remember Matlab indexes arrays from 1, while C starts at 0, so every index
 // needs to be shifted by -1.
 
-// absolute value element wise for a 2x2 matrix
-static inline void abs_matrix_22(TYPE matrix_vals[][2], TYPE matrix_abs[][2]) {
-	int i, j;
+void swap_rows(TYPE* m, size_t rows, size_t cols, size_t row0, size_t row1);
+void swap_cols(TYPE* m, size_t rows, size_t cols, size_t col0, size_t col1);
 
-	for (i = 0; i < 2; i++) {
-		for (j = 0; j < 2; j++) {
-			// printf("prima: %f\n dopo:  %f\n", matrix[i][j],
-			// ABS(matrix[i][j]) );
-			matrix_abs[i][j] = ABS(matrix_vals[i][j]);
-			// printf("%f\n", matricella[i][j] );
-		}
-	}
-	// printf("ok 3\n");
-	printf("\n");
-}
-
-//==============================================================================
-
-// transform from double index to single one so generic matrix multiply can be used with the result
-// res is in row major order
-void flatten_matrix_4x4(TYPE matrix[4][4], TYPE* flattened) {
-	for (size_t i = 0; i < 4; i++) {
-		for (size_t j = 0; j < 4; j++) {
-			flattened[i * 4 + j] = matrix[i][j];
-		}
-	}
-}
-
-//==============================================================================
+void abs_matrix(TYPE *matrix_abs, size_t num_el);
 
 // multiply two matrices of any order, assuming that the multiplication is
 // possible, so no checks done
-void matrix_multiply(const TYPE* A, const TYPE* B, TYPE* RES, int rows_A, int cols_A, int cols_B) {
-	int ii, jj, kk;
-	TYPE product;
-
-	product = 0;
-
-	for (kk = 0; kk < rows_A; kk++) {
-		for (jj = 0; jj < cols_A; jj++) {
-			for (ii = 0; ii < cols_A; ii++) {
-				product += A[cols_A * kk + ii] * B[cols_B * ii + jj];
-			}
-			RES[kk * cols_A + jj] = product;
-			product               = 0;
-		}
-	}
-}
+void matrix_multiply(const TYPE* A, const TYPE* B, TYPE* RES, int rows_A, int cols_A, int cols_B);
 
 // get the value of the greater element of a 2x2 matrix
-TYPE max_val_matrix(TYPE* matrice, size_t size) {
-	TYPE max;
+TYPE max_val_matrix(TYPE* matrice, size_t size);
 
-	for (size_t i = 0; i < size; i++) {
-		if (matrice[i] > max) {
-			max = matrice[i];
-		}
-	}
-	return max;
-}
+static inline void normalize_array(TYPE* vector, int size);
 
-static inline void normalize_array(TYPE* vector, int size) {
-	int ii;
-	TYPE norm = 0;
 
-	// size = sizeof(vector)/sizeof(vector[0]);
-
-	// printf("lunghezza nella funzione: %d\n", size );
-	// printf("lunghezza: %d\n", sizeof(vector));
-
-	// computing the square of the norm of v
-	for (ii = 0; ii < 4; ii++) {
-		norm += vector[ii] * vector[ii];
-	}
-	// squared root of the norm of v
-	norm = SQRT(norm);
-
-	// printf("norm is: %f\n", norm);
-
-	// dividing each element of v for the norm
-	for (ii = 0; ii < size; ii++) {
-		vector[ii] /= norm;
-	}
-}
 
 void polar_decomposition(TYPE A[3][3], TYPE Q[3][3], TYPE H[3][3]) {
 	// Frobenius / L2 norm of the matrice - aka we sum the squares of each
@@ -242,25 +173,12 @@ void polar_decomposition(TYPE A[3][3], TYPE Q[3][3], TYPE H[3][3]) {
 
 	if (r > 0) {
 		// invert lines 0 and r
-		TYPE temp_r[3] = {AA[r][0], AA[r][1], AA[r][2]};
-		TYPE temp_0[3] = {AA[0][0], AA[0][1], AA[0][2]};
-
-		for (size_t k = 0; k < 3; k++) {
-			AA[0][k] = temp_r[k];
-		};
-		for (size_t k = 0; k < 3; k++)
-			AA[r][k] = temp_0[k];
+		swap_rows(*AA, 3, 3, 0, r);
 		dd = -dd;
 	}
 
 	if (c > 0) {
-		// invert columns 0 and c
-		TYPE temp_c[3] = {AA[0][c], AA[1][c], AA[2][c]};
-		TYPE temp_0[3] = {AA[0][0], AA[1][0], AA[2][0]};
-		for (size_t k = 0; k < 3; k++)
-			AA[k][0] = temp_c[k];
-		for (size_t k = 0; k < 3; k++)
-			AA[k][c] = temp_0[k];
+		swap_cols(*AA, 3, 3, 0, c);
 		dd = -dd;
 	}
 
@@ -272,11 +190,11 @@ void polar_decomposition(TYPE A[3][3], TYPE Q[3][3], TYPE H[3][3]) {
 	                  {AA[2][1] - AA[2][0] * m0, AA[2][2] - AA[2][0] * m1}};
 
 	r = 0, c = 0;
-	if (ABS(AA[1][0]) > ABS(AA[0][0]))
+	if (ABS(AAA[1][0]) > ABS(AAA[0][0]))
 		r = 1; // c = 0
-	if (ABS(AA[0][1]) > ABS(AA[r][c]))
+	if (ABS(AAA[0][1]) > ABS(AAA[r][c]))
 		r = 0, c = 1;
-	if (ABS(AA[1][1]) > ABS(AA[r][c]))
+	if (ABS(AAA[1][1]) > ABS(AAA[r][c]))
 		r = 1, c = 1;
 
 	if (r == 1)
@@ -284,29 +202,31 @@ void polar_decomposition(TYPE A[3][3], TYPE Q[3][3], TYPE H[3][3]) {
 	if (c > 0)
 		dd = -dd;
 
-	U[1] = AA[r][c];
+	U[1] = AAA[r][c];
 
 	// fixed from U(2). needs check
 	if (U[1] == 0)
 		U[2] = 0;
 	else
-		U[2] = AA[2 - r][2 - c] - AA[r][2 - c] * AA[2 - r][c] / U[1];
+		// l'espressione qui sotto fa zero e non dovrebbe, perché dopo quando AU viene confrontata è falso ma dovrebbe essere vero
+		U[2] = AAA[2 - r][2 - c] - AAA[r][2 - c] * AAA[2 - r][c] / U[1];
+
 
 	d  = dd;
 	dd = dd * U[0] * U[1] * U[2];
 
-	if (U[0] < 0)
+	if (U[0] <= 0)
 		d = -d;
-	if (U[1] < 0)
+	if (U[1] <= 0)
 		d = -d;
-	if (U[2] < 0)
+	if (U[2] <= 0)
 		d = -d;
 
 	TYPE AU = ABS(U[2]);
 
 	TYPE nit;
 
-	if (AU > 6.607e-8f) {
+	if (AU > 6.607e-8) {
 		nit = 16.8f + 2.f * log10f(AU);
 		nit = ceilf(15.f / nit);
 	} else {
@@ -593,3 +513,95 @@ void polar_decomposition(TYPE A[3][3], TYPE Q[3][3], TYPE H[3][3]) {
 	// unflatten_matrix_3x3(H, H_flat);
 	// unflatten_matrix_3x3(A, A_flat);
 };
+
+void abs_matrix(TYPE *matrix_abs, size_t num_el) {
+	int i, j;
+
+	for (i = 0; i < 2; i++) {
+		// ABS(matrix[i][j]) );
+		matrix_abs[i] = ABS(matrix_abs[i]);
+		// printf("%f\n", matricella[i][j] );
+	}
+	// printf("ok 3\n");
+	printf("\n");
+}
+
+void matrix_multiply(const TYPE* A, const TYPE* B, TYPE* RES, int rows_A, int cols_A, int cols_B) {
+	int ii, jj, kk;
+	TYPE product;
+
+	product = 0;
+
+	for (kk = 0; kk < rows_A; kk++) {
+		for (jj = 0; jj < cols_A; jj++) {
+			for (ii = 0; ii < cols_A; ii++) {
+				product += A[cols_A * kk + ii] * B[cols_B * ii + jj];
+			}
+			RES[kk * cols_A + jj] = product;
+			product               = 0;
+		}
+	}
+}
+
+TYPE max_val_matrix(TYPE* matrice, size_t size) {
+	TYPE max;
+
+	for (size_t i = 0; i < size; i++) {
+		if (matrice[i] > max) {
+			max = matrice[i];
+		}
+	}
+	return max;
+}
+
+static inline void normalize_array(TYPE* vector, int size) {
+	int ii;
+	TYPE norm = 0;
+
+	// size = sizeof(vector)/sizeof(vector[0]);
+
+	// printf("lunghezza nella funzione: %d\n", size );
+	// printf("lunghezza: %d\n", sizeof(vector));
+
+	// computing the square of the norm of v
+	for (ii = 0; ii < 4; ii++) {
+		norm += vector[ii] * vector[ii];
+	}
+	// squared root of the norm of v
+	norm = SQRT(norm);
+
+	// printf("norm is: %f\n", norm);
+
+	// dividing each element of v for the norm
+	for (ii = 0; ii < size; ii++) {
+		vector[ii] /= norm;
+	}
+}
+
+void swap_cols(TYPE* m, size_t rows, size_t cols, size_t col0, size_t col1) {
+	// vector with the same size of one row input matrix (that is the number of columns)
+	TYPE* temp = (TYPE*)calloc(cols, sizeof(TYPE));
+	// int col_f = col0-1;
+	// int col_l = col1-1;
+
+	for (int i=0; i<rows; i++) {
+		temp[i] = m[col0 + cols*i];
+		m[col0 + cols*i] = m[col1 + cols*i];
+		m[col1 + cols*i] = temp[i];
+	}
+	free(temp);
+}
+
+void swap_rows(TYPE* m, size_t rows, size_t cols, size_t row0, size_t row1) {
+	// vector with the same size of one row input matrix (that is the number of columns)
+	TYPE* temp = (TYPE*)calloc(cols, sizeof(TYPE));
+	// int row_f = row0-1;
+	// int row_l = row1-1;
+
+	for (int i=0; i<cols; i++) {
+		temp[i] = m[cols*row0 + i];
+		m[cols*row0 + i] = m[cols*row1 + i];
+		m[cols*row1 + i] = temp[i];
+	}
+	free(temp);
+}
