@@ -77,7 +77,7 @@
 void swap_rows(TYPE* m, size_t rows, size_t cols, size_t row0, size_t row1);
 void swap_cols(TYPE* m, size_t rows, size_t cols, size_t col0, size_t col1);
 
-void abs_matrix(TYPE *matrix_abs, size_t num_el);
+void abs_matrix(TYPE* matrix_abs, size_t num_el);
 
 // multiply two matrices of any order, assuming that the multiplication is
 // possible, so no checks done
@@ -87,8 +87,6 @@ void matrix_multiply(const TYPE* A, const TYPE* B, TYPE* RES, int rows_A, int co
 TYPE max_val_matrix(TYPE* matrice, size_t size);
 
 static inline void normalize_array(TYPE* vector, int size);
-
-
 
 void polar_decomposition(TYPE A[3][3], TYPE Q[3][3], TYPE H[3][3]) {
 	// Frobenius / L2 norm of the matrice - aka we sum the squares of each
@@ -208,9 +206,9 @@ void polar_decomposition(TYPE A[3][3], TYPE Q[3][3], TYPE H[3][3]) {
 	if (U[1] == 0)
 		U[2] = 0;
 	else
-		// l'espressione qui sotto fa zero e non dovrebbe, perché dopo quando AU viene confrontata è falso ma dovrebbe essere vero
+		// l'espressione qui sotto fa zero e non dovrebbe, perché dopo quando AU viene confrontata è falso ma dovrebbe
+		// essere vero
 		U[2] = AAA[2 - r][2 - c] - AAA[r][2 - c] * AAA[2 - r][c] / U[1];
-
 
 	d  = dd;
 	dd = dd * U[0] * U[1] * U[2];
@@ -263,23 +261,23 @@ void polar_decomposition(TYPE A[3][3], TYPE Q[3][3], TYPE H[3][3]) {
 	// ISSUE: possibile cause of the problem
 	if (b >= -0.3332f) {
 		// Use analytic formula if matrice is well conditioned
-		double complex Delta0 = 1.f + 3. * b;
-		double complex Delta1 = -1. + (27. / 16.) * dd * dd + 9. * b;
-		double complex phi    = (Delta1 / Delta0) / csqrt(Delta0);
-		double complex SS     = (4. / 3.) * (1. + ccosf(cacosf(phi) / 3.) * csqrt(Delta0));
-		double complex S      = csqrt(SS) / 2.;
+		TYPE complex Delta0 = 1.f + 3. * b;
+		TYPE complex Delta1 = -1. + (27. / 16.) * dd * dd + 9. * b;
+		TYPE complex phi    = (Delta1 / Delta0) / csqrt(Delta0);
+		TYPE complex SS     = (4. / 3.) * (1. + ccosf(cacosf(phi) / 3.) * csqrt(Delta0));
+		TYPE complex S      = csqrt(SS) / 2.;
 
 		x = (TYPE)(creal(S) + 0.5 * sqrt(fmaxf(0., creal(-SS + 4. + dd / S))));
 	} else {
 		// Use Newton if matrice is ill conditioned
 		// We use double precision temporarily because the solution can
 		// degenerate faster in single precision
-		double x_temp = sqrt(3.);
-		double xold   = 3;
+		TYPE x_temp = sqrt(3.);
+		TYPE xold   = 3;
 		while ((xold - x_temp) > 1e-12) {
 			xold       = x_temp;
-			double px  = x_temp * (x_temp * (x_temp * x_temp - 2.) - dd) + b;
-			double dpx = x_temp * (4. * x_temp * x_temp - 4.) - dd;
+			TYPE px  = x_temp * (x_temp * (x_temp * x_temp - 2.) - dd) + b;
+			TYPE dpx = x_temp * (4. * x_temp * x_temp - 4.) - dd;
 			x_temp     = x_temp - px / dpx;
 		}
 		x = (TYPE)x_temp;
@@ -359,30 +357,37 @@ void polar_decomposition(TYPE A[3][3], TYPE Q[3][3], TYPE H[3][3]) {
 		// TYPE temp_q[4] = {BB[1][0], BB[1][1],BB[1][2],BB[1][3]};
 		TYPE temp[4];
 		// now row 1 can be overwirtten
-		for (size_t i = 0; i < 4; i++) {
-			temp[i]  = BB[1][i];
-			BB[1][i] = BB[r][i];
-			BB[r][i] = temp[i];
-		}
+		swap_rows(*BB, 4, 4, 1, r);
+		// for (size_t i = 0; i < 4; i++) {
+		// 	temp[i]  = BB[1][i];
+		// 	BB[1][i] = BB[r][i];
+		// 	BB[r][i] = temp[i];
+		// }
+
 		// get column number 1 (which is 2 in matlab)
-		for (size_t i = 0; i < 4; i++) {
-			temp[i]  = BB[i][1];
-			BB[i][1] = BB[i][r];
-			BB[i][r] = temp[i];
-		}
+		swap_cols(*BB, 4, 4, 1, r);
+		// for (size_t i = 0; i < 4; i++) {
+		// 	temp[i]  = BB[i][1];
+		// 	BB[i][1] = BB[i][r];
+		// 	BB[i][r] = temp[i];
+		// }
+
 		// now swap the rows of L in the same way
-		for (size_t i = 0; i < 3; i++) {
-			temp[i] = L[1][i];
-			L[1][i] = L[r][i];
-			L[r][i] = temp[i];
-		}
+		swap_rows(*L, 4, 4, 1, r);
+		// for (size_t i = 0; i < 3; i++) {
+		// 	temp[i] = L[1][i];
+		// 	L[1][i] = L[r][i];
+		// 	L[r][i] = temp[i];
+		// }
+
 		// now swap the columns of L in the same way
 		// get column number 1 (which is 2 in matlab)
-		for (size_t i = 0; i < 3; i++) {
-			temp[i] = L[i][1];
-			L[i][1] = L[i][r];
-			L[i][r] = temp[i];
-		}
+		swap_cols(*L, 4, 4, 1, r);
+		// for (size_t i = 0; i < 3; i++) {
+		// 	temp[i] = L[i][1];
+		// 	L[i][1] = L[i][r];
+		// 	L[i][r] = temp[i];
+		// }
 	}
 
 	D[1][1] = BB[1][1];
@@ -514,7 +519,7 @@ void polar_decomposition(TYPE A[3][3], TYPE Q[3][3], TYPE H[3][3]) {
 	// unflatten_matrix_3x3(A, A_flat);
 };
 
-void abs_matrix(TYPE *matrix_abs, size_t num_el) {
+void abs_matrix(TYPE* matrix_abs, size_t num_el) {
 	int i, j;
 
 	for (i = 0; i < 2; i++) {
@@ -527,18 +532,19 @@ void abs_matrix(TYPE *matrix_abs, size_t num_el) {
 }
 
 void matrix_multiply(const TYPE* A, const TYPE* B, TYPE* RES, int rows_A, int cols_A, int cols_B) {
-	int ii, jj, kk;
+	// int ii, jj, kk;
 	TYPE product;
 
-	product = 0;
-
-	for (kk = 0; kk < rows_A; kk++) {
-		for (jj = 0; jj < cols_A; jj++) {
-			for (ii = 0; ii < cols_A; ii++) {
-				product += A[cols_A * kk + ii] * B[cols_B * ii + jj];
+	// k is the row of A that is being multiplied
+	for (size_t k = 0; k < rows_A; ++k) {
+		// is has to be multiplied to each of the columns of B
+		for (size_t j = 0; j < cols_B; ++j) {
+			// use a separate variable to be sure to start from 0 with the product
+			product = 0;
+			for (size_t i = 0; i < cols_A; ++i) {
+				product += A[cols_A * k + i] * B[j + cols_B * i];
 			}
-			RES[kk * cols_A + jj] = product;
-			product               = 0;
+			RES[k * cols_B + j] = product;
 		}
 	}
 }
@@ -584,10 +590,10 @@ void swap_cols(TYPE* m, size_t rows, size_t cols, size_t col0, size_t col1) {
 	// int col_f = col0-1;
 	// int col_l = col1-1;
 
-	for (int i=0; i<rows; i++) {
-		temp[i] = m[col0 + cols*i];
-		m[col0 + cols*i] = m[col1 + cols*i];
-		m[col1 + cols*i] = temp[i];
+	for (int i = 0; i < rows; i++) {
+		temp[i]            = m[col0 + cols * i];
+		m[col0 + cols * i] = m[col1 + cols * i];
+		m[col1 + cols * i] = temp[i];
 	}
 	free(temp);
 }
@@ -598,10 +604,10 @@ void swap_rows(TYPE* m, size_t rows, size_t cols, size_t row0, size_t row1) {
 	// int row_f = row0-1;
 	// int row_l = row1-1;
 
-	for (int i=0; i<cols; i++) {
-		temp[i] = m[cols*row0 + i];
-		m[cols*row0 + i] = m[cols*row1 + i];
-		m[cols*row1 + i] = temp[i];
+	for (int i = 0; i < cols; i++) {
+		temp[i]            = m[cols * row0 + i];
+		m[cols * row0 + i] = m[cols * row1 + i];
+		m[cols * row1 + i] = temp[i];
 	}
 	free(temp);
 }
