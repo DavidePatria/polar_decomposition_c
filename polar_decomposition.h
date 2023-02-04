@@ -405,10 +405,30 @@ void polar_decomposition(TYPE A[3][3], TYPE Q[3][3], TYPE H[3][3]) {
 	D[3][3] = BB[3][3] - L[3][1] * BB[1][3];
 
 	TYPE DD = D[2][2] * D[3][3] - D[2][3] * D[2][3];
+	TYPE v[4];
 
-	// skip DD == 0
+	// TODO: test if case
+	// it is still unclear how to manage the definition of v according to all the if and else
 	if (DD == 0) {
 		printf("DD is zero\n");
+		// DD is symmetric, instead of doing max(abs(D)) this is enough
+		const bool all_zero = (D[2][2] == 0 && D[3][3] == 0 && D[3][2] == 0);
+		if (all_zero == 0) {
+			// WARN: this is local, v has to be moved outside of every loop and then modified otherwise, also removing
+			// the assignation below
+			// TYPE v[4] = {L[1][0] * L[3][1] - L[3][0], -L[3][1], 0, 1};
+			v[0] = L[1][0] * L[3][1] - L[3][0];
+			v[1] = L[3][1];
+			v[2] = 0;
+			v[2] = 1;
+		} else {
+			TYPE nullspace[3];
+			compute_null_space(nullspace, D[2][2], D[3][2], D[3][3]);
+			v[0] = nullspace[0] * L[1][0]*L[2][1] + nullspace[1]*L[1][0]*L[3][1]-L[3][0];
+			v[1] = -nullspace[0] * L[2][1] - nullspace[1] * L[3][1];
+			v[2] = nullspace[0];
+			v[3] = nullspace[1];
+		}
 	}
 
 	TYPE ID[2][2] = {{D[3][3], -D[2][3]}, {-D[2][3], D[2][2]}};
@@ -416,8 +436,12 @@ void polar_decomposition(TYPE A[3][3], TYPE Q[3][3], TYPE H[3][3]) {
 	// TODO: SKIP SUBSPA == 1
 	// going directly for else, subspa = false
 
-	TYPE v[4] = {L[1][0] * L[3][1] + L[2][0] * L[3][2] - L[1][0] * L[3][2] * L[2][1] - L[3][0],
-	             L[3][2] * L[2][1] - L[3][1], -L[3][2], 1};
+	// TYPE v[4] = {L[1][0] * L[3][1] + L[2][0] * L[3][2] - L[1][0] * L[3][2] * L[2][1] - L[3][0],
+	//              L[3][2] * L[2][1] - L[3][1], -L[3][2], 1};
+	v[0] = L[1][0] * L[3][1] + L[2][0] * L[3][2] - L[1][0] * L[3][2] * L[2][1] - L[3][0];
+	v[1] = L[3][2] * L[2][1] - L[3][1];
+	v[2] = -L[3][2];
+	v[3] = 1;
 	// this would already be defined if the other case for subspa were done
 	TYPE IL[4][4] = {
 	    {1, 0, 0, 0}, {-L[1][0], 1, 0, 0}, {L[1][0] * L[2][1] - L[2][0], -L[2][1], 1, 0}, {v[0], v[1], v[2], v[3]}};
@@ -532,7 +556,7 @@ void abs_matrix(TYPE* matrix_abs, size_t num_el) {
 	}
 	// printf("ok 3\n");
 	printf("\n");
-}
+};
 
 void matrix_multiply(const TYPE* A, const TYPE* B, TYPE* RES, int rows_A, int cols_A, int cols_B) {
 	TYPE product;
