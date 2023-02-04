@@ -77,6 +77,8 @@
 void swap_rows(TYPE* m, size_t rows, size_t cols, size_t row0, size_t row1);
 void swap_cols(TYPE* m, size_t rows, size_t cols, size_t col0, size_t col1);
 
+void stampa_matrice(TYPE *m, size_t rows, size_t cols);
+
 void abs_matrix(TYPE* matrix_abs, size_t num_el);
 
 // multiply two matrices of any order, assuming that the multiplication is
@@ -124,7 +126,7 @@ void polar_decomposition(TYPE A[3][3], TYPE Q[3][3], TYPE H[3][3]) {
 	m = A[0][0] * A[1][1] - A[0][1] * A[1][0];
 	b += m * m;
 
-	b = -4.f * b + 1.f;
+	b = -4.0 * b + 1.0;
 
 	TYPE d;
 	bool subspa = 0;
@@ -133,7 +135,7 @@ void polar_decomposition(TYPE A[3][3], TYPE Q[3][3], TYPE H[3][3]) {
 	TYPE AA[3][3] = {{A[0][0], A[0][1], A[0][2]}, {A[1][0], A[1][1], A[1][2]}, {A[2][0], A[2][1], A[2][2]}};
 
 	size_t r = 0, c = 0;
-	TYPE dd = 1.f;
+	TYPE dd = 1.0;
 
 	/*
   if(b - 1.f + 1e-4f) > 0.f)
@@ -166,9 +168,6 @@ void polar_decomposition(TYPE A[3][3], TYPE Q[3][3], TYPE H[3][3]) {
 	if (ABS(A[2][2]) > ABS(A[r][c]))
 		r = 2, c = 2;
 
-	int k;
-	// BUONO FINO A QUI
-
 	if (r > 0) {
 		// invert lines 0 and r
 		swap_rows(*AA, 3, 3, 0, r);
@@ -180,7 +179,7 @@ void polar_decomposition(TYPE A[3][3], TYPE Q[3][3], TYPE H[3][3]) {
 		dd = -dd;
 	}
 
-	TYPE U[3] = {AA[0][0], 0.f, 0.f};
+	TYPE U[3] = {AA[0][0], 0.0, 0.0};
 
 	TYPE m0        = AA[0][1] / AA[0][0];
 	TYPE m1        = AA[0][2] / AA[0][0];
@@ -208,7 +207,7 @@ void polar_decomposition(TYPE A[3][3], TYPE Q[3][3], TYPE H[3][3]) {
 	else
 		// l'espressione qui sotto fa zero e non dovrebbe, perché dopo quando AU viene confrontata è falso ma dovrebbe
 		// essere vero
-		U[2] = AAA[2 - r][2 - c] - AAA[r][2 - c] * AAA[2 - r][c] / U[1];
+		U[2] = AAA[1 - r][1 - c] - AAA[r][1 - c] * AAA[1 - r][c] / U[1];
 
 	d  = dd;
 	dd = dd * U[0] * U[1] * U[2];
@@ -220,28 +219,28 @@ void polar_decomposition(TYPE A[3][3], TYPE Q[3][3], TYPE H[3][3]) {
 	if (U[2] <= 0)
 		d = -d;
 
-	TYPE AU = ABS(U[2]);
+	TYPE AU = ABS(U[1]);
 
 	TYPE nit;
 
 	if (AU > 6.607e-8) {
-		nit = 16.8f + 2.f * log10f(AU);
-		nit = ceilf(15.f / nit);
+		nit = 16.80 + 2.0 * log10(AU);
+		nit = ceil(15.0 / nit);
 	} else {
 		subspa = true;
 	}
 
 	if (d == 0)
-		d = 1.f;
+		d = 1.0;
 
-	dd = 8.f * d * dd;
+	dd = 8.0 * d * dd;
 
 	TYPE t = A[0][0] + A[1][1] + A[2][2];
 
 	TYPE B[4][4] = {{t, A[1][2] - A[2][1], A[2][0] - A[0][2], A[0][1] - A[1][0]},
-	                {0.f, 2.f * A[0][0] - t, A[0][1] + A[1][0], A[0][2] + A[2][0]},
-	                {0.f, 0.f, 2.f * A[1][1] - t, A[1][2] + A[2][1]},
-	                {0.f, 0.f, 0.f, 2.f * A[2][2] - t}};
+	                {0.0, 2.0 * A[0][0] - t, A[0][1] + A[1][0], A[0][2] + A[2][0]},
+	                {0.0, 0.0, 2.0 * A[1][1] - t, A[1][2] + A[2][1]},
+	                {0.0, 0.0, 0.0, 2.0 * A[2][2] - t}};
 
 	for (size_t i = 0; i < 4; ++i)
 		for (size_t j = 0; j < 4; ++j)
@@ -264,10 +263,10 @@ void polar_decomposition(TYPE A[3][3], TYPE Q[3][3], TYPE H[3][3]) {
 		TYPE complex Delta0 = 1.f + 3. * b;
 		TYPE complex Delta1 = -1. + (27. / 16.) * dd * dd + 9. * b;
 		TYPE complex phi    = (Delta1 / Delta0) / csqrt(Delta0);
-		TYPE complex SS     = (4. / 3.) * (1. + ccosf(cacosf(phi) / 3.) * csqrt(Delta0));
+		TYPE complex SS     = (4. / 3.) * (1. + ccos(cacos(phi) / 3.) * csqrt(Delta0));
 		TYPE complex S      = csqrt(SS) / 2.;
 
-		x = (TYPE)(creal(S) + 0.5 * sqrt(fmaxf(0., creal(-SS + 4. + dd / S))));
+		x = (TYPE)(creal(S) + 0.5 * sqrt(fmax(0., creal(-SS + 4. + dd / S))));
 	} else {
 		// Use Newton if matrice is ill conditioned
 		// We use double precision temporarily because the solution can
@@ -297,11 +296,11 @@ void polar_decomposition(TYPE A[3][3], TYPE Q[3][3], TYPE H[3][3]) {
 	// different from matlab because this is an index and matlab starts from 1
 	size_t p[4] = {0, 1, 2, 3};
 
-	TYPE L[4][4] = {{1.f, 0.f, 0.f, 0.f}, {0.f, 1.f, 0.f, 0.f}, {0.f, 0.f, 1.f, 0.f}, {0.f, 0.f, 0.f, 1.f}};
+	TYPE L[4][4] = {{1.0, 0.0, 0.0, 0.0}, {0.0, 1.0, 0.0, 0.0}, {0.0, 0.0, 1.0, 0.0}, {0.0, 0.0, 0.0, 1.0}};
 
 	// not sure about this one initializing
-	// double D[4][4] = {{0.f}};
-	TYPE D[4][4] = {{0.f, 0.f, 0.f, 0.f}, {0.f, 0.f, 0.f, 0.f}, {0.f, 0.f, 0.f, 0.f}, {0.f, 0.f, 0.f, 0.f}};
+	// double D[4][4] = {{0.0}};
+	TYPE D[4][4] = {{0.0, 0.0, 0.0, 0.0}, {0.0, 0.0, 0.0, 0.0}, {0.0, 0.0, 0.0, 0.0}, {0.0, 0.0, 0.0, 0.0}};
 
 	// First step
 	r = 3;
@@ -310,15 +309,21 @@ void polar_decomposition(TYPE A[3][3], TYPE Q[3][3], TYPE H[3][3]) {
 	if (BB[r][r] < BB[1][1])
 		r = 1;
 	if (BB[r][r] > BB[0][0]) {
-		// ASWME: not entirely sure about this one, in octave the result is
-		// different p([1 r(1)]) = [r(1) 1]
 		p[0] = r;
 		p[r] = 0;
 
-		// BB = BB(p,p);
-		for (size_t i = 0; i < 4; ++i)
-			for (size_t j = 0; j < 4; ++j)
-				BB[i][j] = BB[p[i]][p[j]];
+		TYPE temp[4][4] = {0.0};
+
+		for (int i = 0; i < 4; i++)
+			for (int j = 0; j < 4; j++) {
+				temp[i][j] = BB[i][j];
+		}
+
+		for (int i = 0; i < 4; ++i)
+			for (int j = 0; j < 4; j++) {
+				BB[i][j] = temp[p[i]][p[j]];
+		}
+
 	}
 
 	// according to what the matlab code does D(1) = B(1,1) assigns the first
@@ -337,8 +342,8 @@ void polar_decomposition(TYPE A[3][3], TYPE Q[3][3], TYPE H[3][3]) {
 	BB[1][3] = BB[3][1];
 	BB[2][2] -= L[2][0] * BB[0][2];
 
-	BB[3][2] -= L[2][1] * BB[1][3];
-	BB[2][3] = D[3][2];
+	BB[3][2] -= L[2][0] * BB[0][3]; // wrong result
+	BB[2][3] = BB[3][2];
 	BB[3][3] -= L[3][0] * BB[0][3];
 
 	// Second step
@@ -347,7 +352,7 @@ void polar_decomposition(TYPE A[3][3], TYPE Q[3][3], TYPE H[3][3]) {
 	if (BB[2][2] < BB[1][1])
 		r = 1;
 
-	if (BB[r][r] > BB[1][1]) {
+	if (BB[r][r] > BB[0][0]) {
 		p[1] = r;
 		p[r] = 2;
 
@@ -355,7 +360,7 @@ void polar_decomposition(TYPE A[3][3], TYPE Q[3][3], TYPE H[3][3]) {
 		//  another scope so the variables can be reused outside of it
 		// get row number 1 (which is 2 in matlab)
 		// TYPE temp_q[4] = {BB[1][0], BB[1][1],BB[1][2],BB[1][3]};
-		TYPE temp[4];
+		// TYPE temp[4];
 		// now row 1 can be overwirtten
 		swap_rows(*BB, 4, 4, 1, r);
 		// for (size_t i = 0; i < 4; i++) {
@@ -404,7 +409,7 @@ void polar_decomposition(TYPE A[3][3], TYPE Q[3][3], TYPE H[3][3]) {
 
 	// skip DD == 0
 
-	TYPE ID[2][2] = {{D[3][3], D[2][3]}, {D[2][3], D[2][2]}};
+	TYPE ID[2][2] = {{D[3][3], -D[2][3]}, {-D[2][3], D[2][2]}};
 
 	// SKIP SUBSPA == 1
 	// going directly for else, subspa = false
@@ -431,8 +436,12 @@ void polar_decomposition(TYPE A[3][3], TYPE Q[3][3], TYPE H[3][3]) {
 		v[0] /= D[0][0];
 		v[1] /= D[1][1];
 		// first row of ID by v[2:-1]
-		v[2] = (ID[0][0] * v[2] + ID[0][1] * v[3]) / DD;
-		v[3] = (ID[1][0] * v[2] + ID[1][1] * v[3]) / DD;
+		// v[2] = (ID[0][0] * v[2] + ID[0][1] * v[3]) / DD;
+		// v[3] = (ID[1][0] * v[2] + ID[1][1] * v[3]) / DD;
+
+		// a copy of v shall be used to not use a modified value in v[3]
+		v[2] = (ID[0][0] * RES[2] + ID[0][1] * RES[3]) / DD;
+		v[3] = (ID[1][0] * RES[2] + ID[1][1] * RES[3]) / DD;
 
 		// TYPE RES[4] = {};
 		// this should work given that v can be "transposed" by simply changing sizes in the function
@@ -448,10 +457,15 @@ void polar_decomposition(TYPE A[3][3], TYPE Q[3][3], TYPE H[3][3]) {
 
 	// not 100% sure about this one, though is seems the counterintuitive behaviour of the matlab code
 	// TODO: check
-	v[0] = v[p[0]];
-	v[1] = v[p[1]];
-	v[0] = v[p[2]];
-	v[0] = v[p[3]];
+
+	TYPE* temp = (TYPE*)calloc(1, 4*sizeof(TYPE));
+	for (size_t i =0; i<4; i++) {
+		temp[i] = v[i];
+	} 
+	v[0] = temp[p[0]];
+	v[1] = temp[p[1]];
+	v[2] = temp[p[2]];
+	v[3] = temp[p[3]];
 
 	TYPE v11, v22, v33, v12, v03, v13, v02, v01, v23;
 
@@ -480,7 +494,7 @@ void polar_decomposition(TYPE A[3][3], TYPE Q[3][3], TYPE H[3][3]) {
 	Q[2][2] = 1 - v11 - v22;
 
 	if (d == -1) {
-		// invert th sign of every element of Q
+		// invert the sign of every element of Q
 		for (size_t i = 0; i < 3; i++) {
 			for (size_t j = 0; j < 3; j++) {
 				Q[i][j] *= -1;
@@ -601,8 +615,6 @@ void swap_cols(TYPE* m, size_t rows, size_t cols, size_t col0, size_t col1) {
 void swap_rows(TYPE* m, size_t rows, size_t cols, size_t row0, size_t row1) {
 	// vector with the same size of one row input matrix (that is the number of columns)
 	TYPE* temp = (TYPE*)calloc(cols, sizeof(TYPE));
-	// int row_f = row0-1;
-	// int row_l = row1-1;
 
 	for (int i = 0; i < cols; i++) {
 		temp[i]            = m[cols * row0 + i];
@@ -610,4 +622,17 @@ void swap_rows(TYPE* m, size_t rows, size_t cols, size_t row0, size_t row1) {
 		m[cols * row1 + i] = temp[i];
 	}
 	free(temp);
+}
+
+void stampa_matrice(TYPE *m, size_t rows, size_t cols) {
+  int i;
+
+  for (i = 0; i < rows * cols; i++) {
+    printf("%f ", m[i]);
+    if (i % cols == cols - 1) {
+      printf("\n");
+    }
+  }
+  // un bel a capo prima di chiudere
+  printf("\n");
 }
