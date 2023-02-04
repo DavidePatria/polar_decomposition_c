@@ -3,7 +3,8 @@
 
 void print_float(TYPE num);
 void check_orthonormal(TYPE Q[3][3]);
-void stampa_3x3(TYPE  Q[3][3]);
+void stampa_3x3(TYPE Q[3][3]);
+void copy(TYPE* dest, TYPE* source, size_t num_el);
 
 #ifndef TEST_N
 #define TEST_N 1
@@ -11,12 +12,24 @@ void stampa_3x3(TYPE  Q[3][3]);
 
 int main() {
 
+	TYPE A[3][3];
 	// simple case one
-	if (TEST_N == 1) {
-		printf("test on\n");
+	switch (TEST_N) {
+	case 1: {
+		TYPE temp[3][3] = {{1, 2, 3}, {4, 5, 6}, {7, 8, 9}};
+		copy(*A, *temp, 9);
+	}
+	case 2: {
+		TYPE temp[3][3] = {{0.1, 0.1, 0.3}, {0.2, 0.1, 0.2}, {0.3, 0.0, 0.1}};
+		copy(*A, *temp, 9);
+	}
+	// TODO: check and use here the maledict test mentioned in the cpp version
+	case 3: {
+		TYPE temp[3][3] = {{-1, 2, 0}, {1.3, 0.4, 3.4}, {0.3, 2.4, 3.4}};
+		copy(*A, *temp, 9);
+	}
 	}
 
-	TYPE A[3][3] = {{1, 2, 3}, {4, 5, 6}, {7, 8, 9}};
 	TYPE Q[3][3];
 	TYPE H[3][3];
 
@@ -33,11 +46,10 @@ int main() {
 
 	check_orthonormal(Q);
 
-
 	return 0;
 }
 
-void stampa_3x3(TYPE  Q[3][3]) {
+void stampa_3x3(TYPE Q[3][3]) {
 	for (size_t riga = 0; riga < 3; riga++) {
 		for (size_t col = 0; col < 3; col++) {
 			printf("%f ", Q[riga][col]);
@@ -48,7 +60,7 @@ void stampa_3x3(TYPE  Q[3][3]) {
 	printf("\n");
 }
 
-void check_orthonormal(TYPE Q[3][3]){
+void check_orthonormal(TYPE Q[3][3]) {
 	TYPE scalar01 = 0;
 	TYPE scalar12 = 0;
 	TYPE scalar02 = 0;
@@ -63,7 +75,4 @@ void check_orthonormal(TYPE Q[3][3]){
 	print_float(scalar02);
 }
 
-void print_float(TYPE num){
-	printf("scalar12: %f\n", num);
-
-}
+void print_float(TYPE num) { printf("scalar12: %f\n", num); }
