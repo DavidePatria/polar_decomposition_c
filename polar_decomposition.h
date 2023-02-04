@@ -52,7 +52,10 @@
  **/
 
 // define the type for the variables that were previously TYPE as more precision was not though to be necessary
+// an if so the type can be choosen with a gcc flag but would fallback to this if not defined
+#ifndef TYPE
 #define TYPE double
+#endif
 
 // define which ABS to use based on the chosen type
 #if TYPE == double
@@ -77,7 +80,7 @@
 void swap_rows(TYPE* m, size_t rows, size_t cols, size_t row0, size_t row1);
 void swap_cols(TYPE* m, size_t rows, size_t cols, size_t col0, size_t col1);
 
-void stampa_matrice(TYPE *m, size_t rows, size_t cols);
+void stampa_matrice(TYPE* m, size_t rows, size_t cols);
 
 void abs_matrix(TYPE* matrix_abs, size_t num_el);
 
@@ -274,10 +277,10 @@ void polar_decomposition(TYPE A[3][3], TYPE Q[3][3], TYPE H[3][3]) {
 		TYPE x_temp = sqrt(3.);
 		TYPE xold   = 3;
 		while ((xold - x_temp) > 1e-12) {
-			xold       = x_temp;
+			xold     = x_temp;
 			TYPE px  = x_temp * (x_temp * (x_temp * x_temp - 2.) - dd) + b;
 			TYPE dpx = x_temp * (4. * x_temp * x_temp - 4.) - dd;
-			x_temp     = x_temp - px / dpx;
+			x_temp   = x_temp - px / dpx;
 		}
 		x = (TYPE)x_temp;
 	}
@@ -317,13 +320,12 @@ void polar_decomposition(TYPE A[3][3], TYPE Q[3][3], TYPE H[3][3]) {
 		for (int i = 0; i < 4; i++)
 			for (int j = 0; j < 4; j++) {
 				temp[i][j] = BB[i][j];
-		}
+			}
 
 		for (int i = 0; i < 4; ++i)
 			for (int j = 0; j < 4; j++) {
 				BB[i][j] = temp[p[i]][p[j]];
-		}
-
+			}
 	}
 
 	// according to what the matlab code does D(1) = B(1,1) assigns the first
@@ -352,6 +354,7 @@ void polar_decomposition(TYPE A[3][3], TYPE Q[3][3], TYPE H[3][3]) {
 	if (BB[2][2] < BB[1][1])
 		r = 1;
 
+	// does not work for simple case one
 	if (BB[r][r] > BB[0][0]) {
 		p[1] = r;
 		p[r] = 2;
@@ -408,6 +411,9 @@ void polar_decomposition(TYPE A[3][3], TYPE Q[3][3], TYPE H[3][3]) {
 	TYPE DD = D[2][2] * D[3][3] - D[2][3] * D[2][3];
 
 	// skip DD == 0
+	if (DD == 0) {
+		printf("DD is zero\n");
+	}
 
 	TYPE ID[2][2] = {{D[3][3], -D[2][3]}, {-D[2][3], D[2][2]}};
 
@@ -455,17 +461,18 @@ void polar_decomposition(TYPE A[3][3], TYPE Q[3][3], TYPE H[3][3]) {
 		normalize_array(v, 4);
 	}
 
-	// not 100% sure about this one, though is seems the counterintuitive behaviour of the matlab code
-	// TODO: check
-
-	TYPE* temp = (TYPE*)calloc(1, 4*sizeof(TYPE));
-	for (size_t i =0; i<4; i++) {
+	// copy the vector so it does not change during permutation
+	TYPE* temp = (TYPE*)calloc(1, 4 * sizeof(TYPE));
+	for (size_t i = 0; i < 4; i++) {
 		temp[i] = v[i];
-	} 
+	}
+
 	v[0] = temp[p[0]];
 	v[1] = temp[p[1]];
 	v[2] = temp[p[2]];
 	v[3] = temp[p[3]];
+
+	free(temp);
 
 	TYPE v11, v22, v33, v12, v03, v13, v02, v01, v23;
 
@@ -511,15 +518,6 @@ void polar_decomposition(TYPE A[3][3], TYPE Q[3][3], TYPE H[3][3]) {
 		}
 	}
 
-	// tostore the flattened matrix
-	// TYPE Q_t_flat[9];
-	// flatten_matrix_3x3(temp, Q_t_flat);
-	// to be unflattened to be assigned to the result
-	// TYPE H_flat[9];
-
-	// TYPE A_flat[9];
-	// flatten_matrix_3x3(A, A_flat);
-
 	matrix_multiply(*Q_t, *A, *H, 3, 3, 3);
 	// multiply by the norm again
 	for (size_t jj = 0; jj < 9; jj++) {
@@ -527,17 +525,12 @@ void polar_decomposition(TYPE A[3][3], TYPE Q[3][3], TYPE H[3][3]) {
 		// also A was normalized at the beginning
 		(*A)[jj] *= norm;
 	}
-
-	// unflatten_matrix_3x3(H, H_flat);
-	// unflatten_matrix_3x3(H, H_flat);
-	// unflatten_matrix_3x3(A, A_flat);
 };
 
 void abs_matrix(TYPE* matrix_abs, size_t num_el) {
 	int i, j;
 
 	for (i = 0; i < 2; i++) {
-		// ABS(matrix[i][j]) );
 		matrix_abs[i] = ABS(matrix_abs[i]);
 		// printf("%f\n", matricella[i][j] );
 	}
@@ -546,7 +539,6 @@ void abs_matrix(TYPE* matrix_abs, size_t num_el) {
 }
 
 void matrix_multiply(const TYPE* A, const TYPE* B, TYPE* RES, int rows_A, int cols_A, int cols_B) {
-	// int ii, jj, kk;
 	TYPE product;
 
 	// k is the row of A that is being multiplied
@@ -578,11 +570,6 @@ static inline void normalize_array(TYPE* vector, int size) {
 	int ii;
 	TYPE norm = 0;
 
-	// size = sizeof(vector)/sizeof(vector[0]);
-
-	// printf("lunghezza nella funzione: %d\n", size );
-	// printf("lunghezza: %d\n", sizeof(vector));
-
 	// computing the square of the norm of v
 	for (ii = 0; ii < 4; ii++) {
 		norm += vector[ii] * vector[ii];
@@ -601,8 +588,6 @@ static inline void normalize_array(TYPE* vector, int size) {
 void swap_cols(TYPE* m, size_t rows, size_t cols, size_t col0, size_t col1) {
 	// vector with the same size of one row input matrix (that is the number of columns)
 	TYPE* temp = (TYPE*)calloc(cols, sizeof(TYPE));
-	// int col_f = col0-1;
-	// int col_l = col1-1;
 
 	for (int i = 0; i < rows; i++) {
 		temp[i]            = m[col0 + cols * i];
@@ -624,15 +609,15 @@ void swap_rows(TYPE* m, size_t rows, size_t cols, size_t row0, size_t row1) {
 	free(temp);
 }
 
-void stampa_matrice(TYPE *m, size_t rows, size_t cols) {
-  int i;
+void stampa_matrice(TYPE* m, size_t rows, size_t cols) {
+	int i;
 
-  for (i = 0; i < rows * cols; i++) {
-    printf("%f ", m[i]);
-    if (i % cols == cols - 1) {
-      printf("\n");
-    }
-  }
-  // un bel a capo prima di chiudere
-  printf("\n");
+	for (i = 0; i < rows * cols; i++) {
+		printf("%f ", m[i]);
+		if (i % cols == cols - 1) {
+			printf("\n");
+		}
+	}
+	// un bel a capo prima di chiudere
+	printf("\n");
 }
