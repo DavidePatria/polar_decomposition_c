@@ -86,6 +86,8 @@ void matrix_multiply(const TYPE* A, const TYPE* B, TYPE* RES, int rows_A, int co
 // get the value of the greater element of a 2x2 matrix
 TYPE max_val_matrix(TYPE* matrice, size_t size);
 static inline void normalize_array(TYPE* vector, int size);
+void stampa_matrice(TYPE* m, size_t rows, size_t cols);
+void compute_null_space(TYPE* nullspace, const TYPE a, const TYPE b, const TYPE c);
 
 void polar_decomposition(TYPE A[3][3], TYPE Q[3][3], TYPE H[3][3]) {
 	// Frobenius / L2 norm of the matrice - aka we sum the squares of each
@@ -614,4 +616,22 @@ void stampa_matrice(TYPE* m, size_t rows, size_t cols) {
 	}
 	// un bel a capo prima di chiudere
 	printf("\n");
+}
+
+void compute_null_space(TYPE* nullspace, const TYPE a, const TYPE b, const TYPE c) {
+	// chceck that determinant is zero and do something about it
+	if (a * c - b * b == 0) {
+	}
+
+	if (a != 0) {
+		nullspace[0] = b;
+		nullspace[1] = -a;
+	} else {
+		// check on these too
+		// assert(a == 0);
+		// assert(b == 0);
+		// assert(c != 0);
+		nullspace[0] = c;
+		nullspace[1] = -b;
+	}
 }
