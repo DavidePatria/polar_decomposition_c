@@ -79,18 +79,12 @@
 
 void swap_rows(TYPE* m, size_t rows, size_t cols, size_t row0, size_t row1);
 void swap_cols(TYPE* m, size_t rows, size_t cols, size_t col0, size_t col1);
-
-void stampa_matrice(TYPE* m, size_t rows, size_t cols);
-
 void abs_matrix(TYPE* matrix_abs, size_t num_el);
-
 // multiply two matrices of any order, assuming that the multiplication is
 // possible, so no checks done
 void matrix_multiply(const TYPE* A, const TYPE* B, TYPE* RES, int rows_A, int cols_A, int cols_B);
-
 // get the value of the greater element of a 2x2 matrix
 TYPE max_val_matrix(TYPE* matrice, size_t size);
-
 static inline void normalize_array(TYPE* vector, int size);
 
 void polar_decomposition(TYPE A[3][3], TYPE Q[3][3], TYPE H[3][3]) {
@@ -417,7 +411,7 @@ void polar_decomposition(TYPE A[3][3], TYPE Q[3][3], TYPE H[3][3]) {
 
 	TYPE ID[2][2] = {{D[3][3], -D[2][3]}, {-D[2][3], D[2][2]}};
 
-	// SKIP SUBSPA == 1
+	// TODO: SKIP SUBSPA == 1
 	// going directly for else, subspa = false
 
 	TYPE v[4] = {L[1][0] * L[3][1] + L[2][0] * L[3][2] - L[1][0] * L[3][2] * L[2][1] - L[3][0],
