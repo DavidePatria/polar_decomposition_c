@@ -88,6 +88,7 @@ TYPE max_val_matrix(TYPE* matrice, size_t size);
 static inline void normalize_array(TYPE* vector, int size);
 void stampa_matrice(TYPE* m, size_t rows, size_t cols);
 void compute_null_space(TYPE* nullspace, const TYPE a, const TYPE b, const TYPE c);
+void copy(TYPE* dest, TYPE* source, size_t num_el);
 
 void polar_decomposition(TYPE A[3][3], TYPE Q[3][3], TYPE H[3][3]) {
 	// Frobenius / L2 norm of the matrice - aka we sum the squares of each
@@ -313,10 +314,12 @@ void polar_decomposition(TYPE A[3][3], TYPE Q[3][3], TYPE H[3][3]) {
 
 		TYPE temp[4][4] = {0.0};
 
-		for (int i = 0; i < 4; i++)
-			for (int j = 0; j < 4; j++) {
-				temp[i][j] = BB[i][j];
-			}
+		// for (int i = 0; i < 4; i++)
+		// 	for (int j = 0; j < 4; j++) {
+		// 		temp[i][j] = BB[i][j];
+		// 	}
+
+		copy(*temp, *BB, 16);
 
 		for (int i = 0; i < 4; ++i)
 			for (int j = 0; j < 4; j++) {
@@ -454,9 +457,10 @@ void polar_decomposition(TYPE A[3][3], TYPE Q[3][3], TYPE H[3][3]) {
 
 	// copy the vector so it does not change during permutation
 	TYPE* temp = (TYPE*)calloc(1, 4 * sizeof(TYPE));
-	for (size_t i = 0; i < 4; i++) {
-		temp[i] = v[i];
-	}
+	// for (size_t i = 0; i < 4; i++) {
+	// 	temp[i] = v[i];
+	// }
+	copy(temp, v, 4);
 
 	v[0] = temp[p[0]];
 	v[1] = temp[p[1]];
@@ -628,5 +632,10 @@ void compute_null_space(TYPE* nullspace, const TYPE a, const TYPE b, const TYPE 
 		// assert(c != 0);
 		nullspace[0] = c;
 		nullspace[1] = -b;
+	}
+}
+void copy(TYPE* dest, TYPE* source, size_t num_el) {
+	for (size_t psi = 0; psi < num_el; psi++) {
+		dest[psi] = source[psi];
 	}
 }
