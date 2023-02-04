@@ -13,7 +13,7 @@ int main() {
 
 	// simple case one
 	if (TEST_N == 1) {
-		printf("test on");
+		printf("test on\n");
 	}
 
 	TYPE A[3][3] = {{1, 2, 3}, {4, 5, 6}, {7, 8, 9}};
