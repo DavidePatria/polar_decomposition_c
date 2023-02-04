@@ -91,11 +91,13 @@ void compute_null_space(TYPE* nullspace, const TYPE a, const TYPE b, const TYPE 
 void copy(TYPE* dest, TYPE* source, size_t num_el);
 
 // shamelessly copied function
-void orthonormalize_v_with_qr(TYPE*  v0, TYPE* v1, const TYPE v00, const TYPE v10, const TYPE v01, const TYPE v11);
-void multiply_il_v(TYPE* RES, const TYPE IL01, const TYPE IL02, const TYPE IL03, const TYPE IL12, const TYPE IL13, const TYPE* v);
-void multiply_id_v( TYPE* RES, const TYPE ID00, const TYPE ID11, const TYPE* ID, const TYPE* v);
-void multiply_v_il( TYPE* RES, const TYPE* v, const TYPE IL01, const TYPE IL02, const TYPE IL03, const TYPE IL12, const TYPE IL13);
-void orthonormalize_v_with_qr_single( TYPE* v0, TYPE* v1);
+void orthonormalize_v_with_qr(TYPE* v0, TYPE* v1, const TYPE v00, const TYPE v10, const TYPE v01, const TYPE v11);
+void multiply_il_v(TYPE* RES, const TYPE IL01, const TYPE IL02, const TYPE IL03, const TYPE IL12, const TYPE IL13,
+                   const TYPE* v);
+void multiply_id_v(TYPE* RES, const TYPE ID00, const TYPE ID11, const TYPE* ID, const TYPE* v);
+void multiply_v_il(TYPE* RES, const TYPE* v, const TYPE IL01, const TYPE IL02, const TYPE IL03, const TYPE IL12,
+                   const TYPE IL13);
+void orthonormalize_v_with_qr_single(TYPE* v0, TYPE* v1);
 void multiply_minus_v_d(TYPE* RES, TYPE* v, TYPE* D);
 TYPE vector_scalar(const TYPE* a, const TYPE* b, const size_t num_el);
 
@@ -417,12 +419,12 @@ void polar_decomposition(TYPE A[3][3], TYPE Q[3][3], TYPE H[3][3]) {
 
 		// shamelessly copied from the cpp implementation, doing it on my own was too airy
 		if (subspa) {
-   
-			const TYPE IL01 = -L[1][0];//(0,1);
-			const TYPE IL02 = L[1][0] * L[2][1] - L[2][1];//L(0,1) * L(1,2) - L(0,2);
-			const TYPE IL12 = L[2][1];//-L(1,2);
-			const TYPE IL03 = L[1][0]*L[3][1] - L[3][0];//L(0,1) * L(1,3) - L(0,3);
-			const TYPE IL13 = -L[3][1];//-L(1,3);
+
+			const TYPE IL01 = -L[1][0];                    //(0,1);
+			const TYPE IL02 = L[1][0] * L[2][1] - L[2][1]; // L(0,1) * L(1,2) - L(0,2);
+			const TYPE IL12 = L[2][1];                     //-L(1,2);
+			const TYPE IL03 = L[1][0] * L[3][1] - L[3][0]; // L(0,1) * L(1,3) - L(0,3);
+			const TYPE IL13 = -L[3][1];                    //-L(1,3);
 
 			const TYPE v00 = IL02;
 			const TYPE v10 = IL03;
@@ -447,16 +449,19 @@ void polar_decomposition(TYPE A[3][3], TYPE Q[3][3], TYPE H[3][3]) {
 				multiply_v_il(v1, v1, IL01, IL02, IL03, IL12, IL13);
 			}
 
-
 			orthonormalize_v_with_qr_single(v0, v1);
 
 			// TODO: conclude the focking work
 
-			TYPE v0_temp[4]; multiply_v_il(v0_temp, v0, L[1][0], L[2][0], L[3][0], L[2][1], L[3][1]);
-			TYPE v1_temp[4]; multiply_v_il(v1_temp, v1, L[1][0], L[2][0], L[3][0], L[2][1], L[3][1]);
+			TYPE v0_temp[4];
+			multiply_v_il(v0_temp, v0, L[1][0], L[2][0], L[3][0], L[2][1], L[3][1]);
+			TYPE v1_temp[4];
+			multiply_v_il(v1_temp, v1, L[1][0], L[2][0], L[3][0], L[2][1], L[3][1]);
 
-			TYPE H0[4]; multiply_minus_v_d( H0, v0_temp, *D);
-			TYPE H1[4]; multiply_minus_v_d( H1, v1_temp, *D);
+			TYPE H0[4];
+			multiply_minus_v_d(H0, v0_temp, *D);
+			TYPE H1[4];
+			multiply_minus_v_d(H1, v1_temp, *D);
 
 			const TYPE H00 = vector_scalar(H0, v0_temp, 4);
 			const TYPE H10 = vector_scalar(H0, v1_temp, 4);
@@ -465,18 +470,18 @@ void polar_decomposition(TYPE A[3][3], TYPE Q[3][3], TYPE H[3][3]) {
 
 			if (ABS(H10) < (TYPE)(1.0e-15)) {
 				if (H00 > H10) {
-					copy(v,v0,4);
+					copy(v, v0, 4);
 				} else {
-					copy(v,v1,4);
+					copy(v, v1, 4);
 				}
 			} else {
 				const TYPE r = (H00 - H11) / (2 * H10);
-				const int s = (H10 < 0 ? -1 : 1);
+				const int s  = (H10 < 0 ? -1 : 1);
 				const TYPE f = r + s * SQRT(1 + r * r);
-				v[0] = v0[0] * f + v1[0];
-				v[1] = v0[1] * f + v1[1];
-				v[2] = v0[2] * f + v1[2];
-				v[3] = v0[3] * f + v1[3];
+				v[0]         = v0[0] * f + v1[0];
+				v[1]         = v0[1] * f + v1[1];
+				v[2]         = v0[2] * f + v1[2];
+				v[3]         = v0[3] * f + v1[3];
 			}
 		} else {
 			// this inizialitaion values are the ones for inside suabspa==false, but are set here to avoid the assle of
@@ -712,50 +717,51 @@ void copy(TYPE* dest, TYPE* source, size_t num_el) {
 	}
 }
 
-void orthonormalize_v_with_qr(TYPE*  v0, TYPE* v1, const TYPE v00, const TYPE v10, const TYPE v01, const TYPE v11) {            
+void orthonormalize_v_with_qr(TYPE* v0, TYPE* v1, const TYPE v00, const TYPE v10, const TYPE v01, const TYPE v11) {
 	v0[0] = v00;
-    v0[1] = v01;
-    v0[2] = 1;
-    v0[3] = 0;
-    normalize_array(v0,4);
+	v0[1] = v01;
+	v0[2] = 1;
+	v0[3] = 0;
+	normalize_array(v0, 4);
 
 	v1[0] = v10 + v01 * v01 * v10 - v00 * v01 * v11;
 	v1[1] = v11 - v00 * v01 * v10 + v00 * v00 * v11;
 	v1[2] = -v00 * v10 - v01 * v11;
 	v1[3] = v00 * v00 + v01 * v01 + 1;
-	normalize_array(v1,4);
+	normalize_array(v1, 4);
 }
 
-
-void multiply_il_v(TYPE* RES, const TYPE IL01, const TYPE IL02, const TYPE IL03, const TYPE IL12, const TYPE IL13, const TYPE* v) {
-            RES[0] = v[0];
-            RES[1] = v[0] * IL01 + v[1];
-            RES[2] = v[0] * IL02 + v[1] * IL12 + v[2];
-            RES[3] = v[0] * IL03 + v[1] * IL13 + v[3];
+void multiply_il_v(TYPE* RES, const TYPE IL01, const TYPE IL02, const TYPE IL03, const TYPE IL12, const TYPE IL13,
+                   const TYPE* v) {
+	RES[0] = v[0];
+	RES[1] = v[0] * IL01 + v[1];
+	RES[2] = v[0] * IL02 + v[1] * IL12 + v[2];
+	RES[3] = v[0] * IL03 + v[1] * IL13 + v[3];
 }
 
 // ID is 2x2
-void multiply_id_v( TYPE* RES, const TYPE ID00, const TYPE ID11, const TYPE* ID, const TYPE* v) {
+void multiply_id_v(TYPE* RES, const TYPE ID00, const TYPE ID11, const TYPE* ID, const TYPE* v) {
 	RES[0] = v[0] * ID00;
 	RES[1] = v[1] * ID11;
 	RES[2] = v[2] * ID[0] + v[3] * ID[1];
 	RES[3] = v[2] * ID[2] + v[3] * ID[3];
 }
 
-void multiply_v_il(TYPE* RES, const TYPE* v, const TYPE IL01, const TYPE IL02, const TYPE IL03, const TYPE IL12, const TYPE IL13) {
+void multiply_v_il(TYPE* RES, const TYPE* v, const TYPE IL01, const TYPE IL02, const TYPE IL03, const TYPE IL12,
+                   const TYPE IL13) {
 	RES[0] = v[0] + v[1] * IL01 + v[2] * IL02 + v[3] * IL03;
 	RES[1] = v[1] + v[2] * IL12 + v[3] * IL13;
 	RES[2] = v[2];
 	RES[3] = v[3];
 }
 
-void orthonormalize_v_with_qr_single( TYPE* v0, TYPE* v1) {
+void orthonormalize_v_with_qr_single(TYPE* v0, TYPE* v1) {
 	// The factorization was obtained symbolically by WolframAlpha
 	// by running the following query:
 	//
 	// QRDecomposition[{{a,e},{b,f},{c,g},{d,h}}]
 
-	normalize_array(v0,4);
+	normalize_array(v0, 4);
 
 	// To avoid numerical stability issues when multiplying too big values in the solution,
 	// we scale down the second vector.
@@ -781,11 +787,11 @@ void orthonormalize_v_with_qr_single( TYPE* v0, TYPE* v1) {
 
 	// OPTME: We could reuse some of the multiplications.
 	// ANSME: Is there a more numerically stable way to do this?
-	v1[0] = b*b*e + c*c*e + d*d*e - a*b*f - a*c*g - a*d*h;
-	v1[1] = -a*b*e + a*a*f + c*c*f + d*d*f - b*c*g - b*d*h;
-	v1[2] = -a*c*e - b*c*f + a*a*g + b*b*g + d*d*g - c*d*h;
-	v1[3] = -a*d*e - b*d*f - c*d*g + a*a*h + b*b*h + c*c*h;
-	normalize_array(v1,4);
+	v1[0] = b * b * e + c * c * e + d * d * e - a * b * f - a * c * g - a * d * h;
+	v1[1] = -a * b * e + a * a * f + c * c * f + d * d * f - b * c * g - b * d * h;
+	v1[2] = -a * c * e - b * c * f + a * a * g + b * b * g + d * d * g - c * d * h;
+	v1[3] = -a * d * e - b * d * f - c * d * g + a * a * h + b * b * h + c * c * h;
+	normalize_array(v1, 4);
 }
 
 void multiply_minus_v_d(TYPE* RES, TYPE* v, TYPE* D) {
@@ -796,11 +802,10 @@ void multiply_minus_v_d(TYPE* RES, TYPE* v, TYPE* D) {
 }
 
 // scalar product of two vectors
-TYPE vector_scalar(const TYPE* a, const TYPE* b, const size_t num_el)
-{
+TYPE vector_scalar(const TYPE* a, const TYPE* b, const size_t num_el) {
 	TYPE somma = {0.0};
-	for (size_t jod =0; jod<num_el; jod++) {
-		somma += a[jod]*b[jod];
+	for (size_t jod = 0; jod < num_el; jod++) {
+		somma += a[jod] * b[jod];
 	}
 	return somma;
 }
