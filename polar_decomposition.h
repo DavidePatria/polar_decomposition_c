@@ -405,8 +405,6 @@ void polar_decomposition(TYPE A[3][3], TYPE Q[3][3], TYPE H[3][3]) {
 
 		// this inizialitaion values are the ones for inside suabspa==false, but are set here to avoid the assle of
 		// reassigning them after one by one
-		TYPE IL[4][4] = {
-		    {1, 0, 0, 0}, {-L[1][0], 1, 0, 0}, {L[1][0] * L[2][1] - L[2][0], -L[2][1], 1, 0}, {v[0], v[1], v[2], v[3]}};
 
 		if (subspa) {
 
@@ -421,6 +419,11 @@ void polar_decomposition(TYPE A[3][3], TYPE Q[3][3], TYPE H[3][3]) {
 			v[1] = L[3][2] * L[2][1] - L[3][1];
 			v[2] = -L[3][2];
 			v[3] = 1;
+
+			TYPE IL[4][4] = {{1, 0, 0, 0},
+			                 {-L[1][0], 1, 0, 0},
+			                 {L[1][0] * L[2][1] - L[2][0], -L[2][1], 1, 0},
+			                 {v[0], v[1], v[2], v[3]}};
 			// this would already be defined if the other case for subspa were done
 
 			// normalize array
