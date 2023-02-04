@@ -356,42 +356,13 @@ void polar_decomposition(TYPE A[3][3], TYPE Q[3][3], TYPE H[3][3]) {
 		p[r] = 2;
 
 		// BB([2 r(1)],:) = BB([r(1) 2],:);
-		//  another scope so the variables can be reused outside of it
-		// get row number 1 (which is 2 in matlab)
-		// TYPE temp_q[4] = {BB[1][0], BB[1][1],BB[1][2],BB[1][3]};
-		// TYPE temp[4];
-		// now row 1 can be overwirtten
 		swap_rows(*BB, 4, 4, 1, r);
-		// for (size_t i = 0; i < 4; i++) {
-		// 	temp[i]  = BB[1][i];
-		// 	BB[1][i] = BB[r][i];
-		// 	BB[r][i] = temp[i];
-		// }
-
 		// get column number 1 (which is 2 in matlab)
 		swap_cols(*BB, 4, 4, 1, r);
-		// for (size_t i = 0; i < 4; i++) {
-		// 	temp[i]  = BB[i][1];
-		// 	BB[i][1] = BB[i][r];
-		// 	BB[i][r] = temp[i];
-		// }
-
 		// now swap the rows of L in the same way
 		swap_rows(*L, 4, 4, 1, r);
-		// for (size_t i = 0; i < 3; i++) {
-		// 	temp[i] = L[1][i];
-		// 	L[1][i] = L[r][i];
-		// 	L[r][i] = temp[i];
-		// }
-
 		// now swap the columns of L in the same way
-		// get column number 1 (which is 2 in matlab)
 		swap_cols(*L, 4, 4, 1, r);
-		// for (size_t i = 0; i < 3; i++) {
-		// 	temp[i] = L[i][1];
-		// 	L[i][1] = L[i][r];
-		// 	L[i][r] = temp[i];
-		// }
 	}
 
 	D[1][1] = BB[1][1];
