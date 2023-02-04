@@ -90,6 +90,7 @@ void stampa_matrice(TYPE* m, size_t rows, size_t cols);
 void compute_null_space(TYPE* nullspace, const TYPE a, const TYPE b, const TYPE c);
 void copy(TYPE* dest, TYPE* source, size_t num_el);
 
+//==============================================================================
 void polar_decomposition(TYPE A[3][3], TYPE Q[3][3], TYPE H[3][3]) {
 	// Frobenius / L2 norm of the matrice - aka we sum the squares of each
 	// matrice element and take the sqrt
@@ -281,25 +282,21 @@ void polar_decomposition(TYPE A[3][3], TYPE Q[3][3], TYPE H[3][3]) {
 		}
 		x = (TYPE)x_temp;
 	}
-	// X OUT OF HERE SEEMS TO BE DIFFERENT FROM THE MATLAB ONE
 
 	// Again, don't do the quick path
 	TYPE BB[4][4];
 
-	for (size_t i = 0; i < 4; ++i)
+	for (size_t i = 0; i < 4; ++i) {
 		for (size_t j = 0; j < 4; ++j) {
 			BB[i][j] -= B[i][j];
 			if (i == j)
 				BB[i][j] += x; // add x on the diagonal
 		}
+	}
 
 	// different from matlab because this is an index and matlab starts from 1
-	size_t p[4] = {0, 1, 2, 3};
-
+	size_t p[4]  = {0, 1, 2, 3};
 	TYPE L[4][4] = {{1.0, 0.0, 0.0, 0.0}, {0.0, 1.0, 0.0, 0.0}, {0.0, 0.0, 1.0, 0.0}, {0.0, 0.0, 0.0, 1.0}};
-
-	// not sure about this one initializing
-	// double D[4][4] = {{0.0}};
 	TYPE D[4][4] = {{0.0, 0.0, 0.0, 0.0}, {0.0, 0.0, 0.0, 0.0}, {0.0, 0.0, 0.0, 0.0}, {0.0, 0.0, 0.0, 0.0}};
 
 	// First step
@@ -365,6 +362,7 @@ void polar_decomposition(TYPE A[3][3], TYPE Q[3][3], TYPE H[3][3]) {
 		// now swap the rows of L in the same way
 		swap_rows(*L, 4, 4, 1, r);
 		// now swap the columns of L in the same way
+		// get column number 1 (which is 2 in matlab)
 		swap_cols(*L, 4, 4, 1, r);
 	}
 
@@ -388,8 +386,6 @@ void polar_decomposition(TYPE A[3][3], TYPE Q[3][3], TYPE H[3][3]) {
 		// DD is symmetric, instead of doing max(abs(D)) this is enough
 		const bool all_zero = (D[2][2] == 0 && D[3][3] == 0 && D[3][2] == 0);
 		if (all_zero == 0) {
-			// WARN: this is local, v has to be moved outside of every loop and then modified otherwise, also removing
-			// the assignation below
 			// TYPE v[4] = {L[1][0] * L[3][1] - L[3][0], -L[3][1], 0, 1};
 			v[0] = L[1][0] * L[3][1] - L[3][0];
 			v[1] = L[3][1];
@@ -398,63 +394,62 @@ void polar_decomposition(TYPE A[3][3], TYPE Q[3][3], TYPE H[3][3]) {
 		} else {
 			TYPE nullspace[3];
 			compute_null_space(nullspace, D[2][2], D[3][2], D[3][3]);
-			v[0] = nullspace[0] * L[1][0]*L[2][1] + nullspace[1]*L[1][0]*L[3][1]-L[3][0];
+			v[0] = nullspace[0] * L[1][0] * L[2][1] + nullspace[1] * L[1][0] * L[3][1] - L[3][0];
 			v[1] = -nullspace[0] * L[2][1] - nullspace[1] * L[3][1];
 			v[2] = nullspace[0];
 			v[3] = nullspace[1];
 		}
-	}
+	} else {
 
-	TYPE ID[2][2] = {{D[3][3], -D[2][3]}, {-D[2][3], D[2][2]}};
+		TYPE ID[2][2] = {{D[3][3], -D[2][3]}, {-D[2][3], D[2][2]}};
 
-	// TODO: SKIP SUBSPA == 1
-	// going directly for else, subspa = false
+		// this inizialitaion values are the ones for inside suabspa==false, but are set here to avoid the assle of
+		// reassigning them after one by one
+		TYPE IL[4][4] = {
+		    {1, 0, 0, 0}, {-L[1][0], 1, 0, 0}, {L[1][0] * L[2][1] - L[2][0], -L[2][1], 1, 0}, {v[0], v[1], v[2], v[3]}};
 
-	// TYPE v[4] = {L[1][0] * L[3][1] + L[2][0] * L[3][2] - L[1][0] * L[3][2] * L[2][1] - L[3][0],
-	//              L[3][2] * L[2][1] - L[3][1], -L[3][2], 1};
-	v[0] = L[1][0] * L[3][1] + L[2][0] * L[3][2] - L[1][0] * L[3][2] * L[2][1] - L[3][0];
-	v[1] = L[3][2] * L[2][1] - L[3][1];
-	v[2] = -L[3][2];
-	v[3] = 1;
-	// this would already be defined if the other case for subspa were done
-	TYPE IL[4][4] = {
-	    {1, 0, 0, 0}, {-L[1][0], 1, 0, 0}, {L[1][0] * L[2][1] - L[2][0], -L[2][1], 1, 0}, {v[0], v[1], v[2], v[3]}};
+		if (subspa) {
 
-	// normalize array
-	normalize_array(v, 4);
+		} else {
+			// this inizialitaion values are the ones for inside suabspa==false, but are set here to avoid the assle of
+			// reassigning them after one by one TYPE IL[4][4] = { {1, 0, 0, 0}, {-L[1][0], 1, 0, 0}, {L[1][0] * L[2][1]
+			// - L[2][0], -L[2][1], 1, 0}, {v[0], v[1], v[2], v[3]}};
 
-	for (size_t i = 0; i < nit; i++) {
-		// flat array for the result of product
-		TYPE RES[4];
-		// matrix_multiply(IL_flat, v, RES, 4, 4, 1);
-		matrix_multiply(*IL, v, RES, 4, 4, 1);
-		// now copy the result of multiplication into the array
-		for (size_t i = 0; i < 4; i++) {
-			v[i] = RES[i];
-		}
+			// TYPE v[4] = {L[1][0] * L[3][1] + L[2][0] * L[3][2] - L[1][0] * L[3][2] * L[2][1] - L[3][0],
+			//              L[3][2] * L[2][1] - L[3][1], -L[3][2], 1};
+			v[0] = L[1][0] * L[3][1] + L[2][0] * L[3][2] - L[1][0] * L[3][2] * L[2][1] - L[3][0];
+			v[1] = L[3][2] * L[2][1] - L[3][1];
+			v[2] = -L[3][2];
+			v[3] = 1;
+			// this would already be defined if the other case for subspa were done
 
-		v[0] /= D[0][0];
-		v[1] /= D[1][1];
-		// first row of ID by v[2:-1]
-		// v[2] = (ID[0][0] * v[2] + ID[0][1] * v[3]) / DD;
-		// v[3] = (ID[1][0] * v[2] + ID[1][1] * v[3]) / DD;
+			// normalize array
+			normalize_array(v, 4);
 
-		// a copy of v shall be used to not use a modified value in v[3]
-		v[2] = (ID[0][0] * RES[2] + ID[0][1] * RES[3]) / DD;
-		v[3] = (ID[1][0] * RES[2] + ID[1][1] * RES[3]) / DD;
+			for (size_t i = 0; i < nit; i++) {
+				// flat array for the result of product
+				TYPE RES[4];
+				// matrix_multiply(IL_flat, v, RES, 4, 4, 1);
+				matrix_multiply(*IL, v, RES, 4, 4, 1);
+				// now copy the result of multiplication into the array
+				copy(v, RES, 4);
 
-		// TYPE RES[4] = {};
-		// this should work given that v can be "transposed" by simply changing sizes in the function
-		matrix_multiply(v, *IL, RES, 1, 4, 4);
-		// assign the result of multiplication to v
-		for (size_t i = 0; i < 4; i++) {
-			v[i] = RES[i];
-		}
-		// this does not matter, right?
-		// v = v';
-		normalize_array(v, 4);
-	}
+				v[0] /= D[0][0];
+				v[1] /= D[1][1];
+				v[2] = (ID[0][0] * RES[2] + ID[0][1] * RES[3]) / DD;
+				v[3] = (ID[1][0] * RES[2] + ID[1][1] * RES[3]) / DD;
 
+				// TYPE RES[4] = {};
+				// this should work given that v can be "transposed" by simply changing sizes in the function
+				matrix_multiply(v, *IL, RES, 1, 4, 4);
+				// assign the result of multiplication to v
+				copy(v, RES, 4);
+				normalize_array(v, 4);
+			}
+		} // end else (that is susbspa==false)
+	}     // end else DD == 0
+
+	//============================================================================
 	// copy the vector so it does not change during permutation
 	TYPE* temp = (TYPE*)calloc(1, 4 * sizeof(TYPE));
 	// for (size_t i = 0; i < 4; i++) {
@@ -468,6 +463,7 @@ void polar_decomposition(TYPE A[3][3], TYPE Q[3][3], TYPE H[3][3]) {
 	v[3] = temp[p[3]];
 
 	free(temp);
+	//============================================================================
 
 	TYPE v11, v22, v33, v12, v03, v13, v02, v01, v23;
 
@@ -521,6 +517,8 @@ void polar_decomposition(TYPE A[3][3], TYPE Q[3][3], TYPE H[3][3]) {
 		(*A)[jj] *= norm;
 	}
 };
+
+//==============================================================================
 
 void abs_matrix(TYPE* matrix_abs, size_t num_el) {
 	int i, j;
@@ -634,6 +632,7 @@ void compute_null_space(TYPE* nullspace, const TYPE a, const TYPE b, const TYPE 
 		nullspace[1] = -b;
 	}
 }
+
 void copy(TYPE* dest, TYPE* source, size_t num_el) {
 	for (size_t psi = 0; psi < num_el; psi++) {
 		dest[psi] = source[psi];
